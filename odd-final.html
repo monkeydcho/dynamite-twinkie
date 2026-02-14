@@ -7,7 +7,12 @@
 <title>Odd One Out</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Archivo:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Cabin:wght@600;700&family=Archivo:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
 <style>
     * {
         margin: 0;
@@ -16,15 +21,15 @@
     }
 
     body {
-        font-family: 'Archivo', sans-serif;
-        background: #3e2723;
+        font-family: 'Cabin', 'Archivo', sans-serif;
+        background: #1a0f0a;
         min-height: 100vh;
         padding: 0;
         position: relative;
         overflow-x: hidden;
     }
 
-    /* Coffee texture */
+    /* Realistic wood texture background */
     body::before {
         content: '';
         position: fixed;
@@ -32,69 +37,149 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: 
-            radial-gradient(circle at 20% 30%, rgba(121, 85, 72, 0.15) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(93, 64, 55, 0.1) 0%, transparent 50%),
+        background-image: 
+            radial-gradient(ellipse 120px 60px at 12% 18%, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.15) 30%, transparent 60%),
+            radial-gradient(ellipse 90px 45px at 88% 65%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 35%, transparent 55%),
+            radial-gradient(ellipse 100px 50px at 35% 85%, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.08) 40%, transparent 60%),
+            radial-gradient(ellipse 75px 38px at 68% 25%, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 45%, transparent 65%),
+            radial-gradient(ellipse 85px 42px at 50% 50%, rgba(0,0,0,0.12) 0%, transparent 50%),
+            repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 1px,
+                rgba(0,0,0,0.04) 1px,
+                rgba(0,0,0,0.04) 2px,
+                transparent 2px,
+                transparent 4px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                #5c4033 0px,
+                #6b4d3a 80px,
+                #584034 160px,
+                #6e5142 240px,
+                #5c4033 320px,
+                #675040 400px,
+                #5c4033 480px
+            ),
             repeating-linear-gradient(
                 0deg,
-                transparent,
-                transparent 3px,
-                rgba(78, 52, 46, 0.05) 3px,
-                rgba(78, 52, 46, 0.05) 6px
+                rgba(0,0,0,0.03) 0px,
+                transparent 1px,
+                rgba(0,0,0,0.02) 2px,
+                transparent 3px
+            ),
+            linear-gradient(
+                180deg,
+                #5c4033 0%,
+                #6b4d3a 50%,
+                #5c4033 100%
             );
         pointer-events: none;
-        opacity: 0.4;
-        z-index: 998;
     }
 
-    /* Warm cafe lighting */
-    .warm-light {
+    body::after {
+        content: '';
         position: fixed;
         top: 0;
-        left: 50%;
-        width: 80%;
+        left: 0;
+        width: 100%;
         height: 100%;
-        background: radial-gradient(ellipse at top, rgba(255, 183, 77, 0.08) 0%, transparent 60%);
-        transform: translateX(-50%);
+        background: 
+            repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                rgba(0,0,0,0.025) 1px,
+                transparent 2px,
+                rgba(0,0,0,0.015) 3px,
+                transparent 6px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                transparent 158px,
+                rgba(0,0,0,0.15) 159px,
+                rgba(0,0,0,0.2) 160px,
+                rgba(0,0,0,0.15) 161px,
+                transparent 162px
+            );
         pointer-events: none;
-        animation: flicker 8s ease-in-out infinite;
-        z-index: 0;
+        opacity: 0.8;
     }
 
-    @keyframes flicker {
-        0%, 100% { opacity: 0.6; }
-        50% { opacity: 0.8; }
-    }
-
-    /* Coffee cup steam */
-    .steam {
+    .record {
         position: fixed;
-        font-size: 2rem;
-        opacity: 0.1;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background: 
+            radial-gradient(circle at center, #0d0907 20%, transparent 20%, transparent 21%, #0d0907 21%),
+            radial-gradient(circle at center, #1a1310 35%, #0d0907 35%, #0d0907 36%, #1a1310 36%),
+            radial-gradient(circle at center, #0d0907 50%, #1a1310 50%, #1a1310 51%, #0d0907 51%),
+            radial-gradient(circle at center, #1a1310 65%, #0d0907 65%),
+            linear-gradient(45deg, #0d0907 25%, transparent 25%, transparent 75%, #0d0907 75%),
+            #0d0907;
+        box-shadow: 
+            0 0 60px rgba(0,0,0,0.9),
+            inset 0 0 40px rgba(0,0,0,0.5);
+        animation: spin-record 8s linear infinite;
         pointer-events: none;
-        animation: rise 15s ease-in-out infinite;
-        z-index: 0;
+        opacity: 0.12;
     }
 
-    .steam-1 {
-        top: 15%;
-        left: 12%;
+    .record-1 {
+        top: -150px;
+        right: -150px;
+    }
+
+    .record-2 {
+        bottom: -200px;
+        left: -200px;
+        animation-duration: 12s;
+        animation-direction: reverse;
+        opacity: 0.08;
+    }
+
+    @keyframes spin-record {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .light-spot {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        filter: blur(60px);
+        opacity: 0.15;
+        animation: float 10s ease-in-out infinite;
+    }
+
+    .light-spot-1 {
+        top: 10%;
+        left: 20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(251, 191, 36, 0.3), transparent 70%);
         animation-delay: 0s;
     }
 
-    .steam-2 {
-        bottom: 20%;
-        right: 18%;
-        animation-delay: 5s;
+    .light-spot-2 {
+        bottom: 15%;
+        right: 15%;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(217, 119, 6, 0.25), transparent 70%);
+        animation-delay: 3s;
     }
 
-    @keyframes rise {
-        0%, 100% { transform: translateY(0) scale(1); opacity: 0.1; }
-        50% { transform: translateY(-40px) scale(1.2); opacity: 0.15; }
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0); }
+        33% { transform: translate(-20px, 30px); }
+        66% { transform: translate(20px, -20px); }
     }
 
     .container {
-        max-width: 680px;
+        max-width: 720px;
         margin: 0 auto;
         padding: 48px 24px;
         position: relative;
@@ -103,76 +188,179 @@
 
     h1 {
         font-family: 'Righteous', sans-serif;
-        font-size: 4.2rem;
+        font-size: 4.5rem;
         text-align: center;
-        margin-bottom: 16px;
-        color: #d7ccc8;
+        margin-bottom: 12px;
+        color: #fbbf24;
         text-shadow: 
-            2px 2px 0 rgba(0,0,0,0.3),
-            0 0 30px rgba(215, 204, 200, 0.3);
-        letter-spacing: 0.05em;
+            3px 3px 0 rgba(120, 53, 15, 0.6),
+            0 0 50px rgba(251, 191, 36, 0.5),
+            0 0 80px rgba(217, 119, 6, 0.3);
+        letter-spacing: 0.08em;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
     }
 
     h2 {
         font-family: 'Righteous', sans-serif;
-        font-size: 2.5rem;
-        margin-bottom: 32px;
-        color: #bcaaa4;
+        font-size: 2.6rem;
+        margin-bottom: 28px;
+        color: #fcd34d;
         text-align: center;
-        text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+        text-shadow: 
+            2px 2px 0 rgba(120, 53, 15, 0.4),
+            0 0 30px rgba(252, 211, 77, 0.3);
     }
 
     .subtitle {
         text-align: center;
-        color: #a1887f;
-        font-size: 1.1rem;
-        margin-bottom: 48px;
+        color: #fde68a;
+        font-size: 1.15rem;
+        margin-bottom: 40px;
         font-weight: 600;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.04em;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
     }
 
     .setup-section {
-        margin-bottom: 32px;
-        background: rgba(78, 52, 46, 0.5);
-        backdrop-filter: blur(10px);
-        padding: 28px;
+        margin-bottom: 28px;
+        background: 
+            linear-gradient(135deg, rgba(61, 40, 23, 0.85) 0%, rgba(74, 51, 32, 0.9) 100%);
+        backdrop-filter: blur(12px);
+        padding: 32px;
+        border-radius: 16px;
+        border: 3px solid rgba(139, 98, 66, 0.4);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.7),
+            inset 0 1px 0 rgba(251, 191, 36, 0.1),
+            inset 0 -2px 8px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+
+    .setup-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                rgba(0,0,0,0.05) 1px,
+                transparent 2px,
+                transparent 150px,
+                rgba(139, 98, 66, 0.08) 152px,
+                transparent 154px
+            );
+        border-radius: 16px;
+        pointer-events: none;
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .mode-btn {
+        flex: 1;
+        padding: 16px;
+        background: rgba(26, 15, 10, 0.6);
+        border: 2px solid rgba(139, 98, 66, 0.3);
         border-radius: 12px;
-        border: 2px solid rgba(161, 136, 127, 0.3);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        color: #fde68a;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: 'Cabin', sans-serif;
+    }
+
+    .mode-btn:hover {
+        border-color: rgba(139, 98, 66, 0.5);
+    }
+
+    .mode-btn.active {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 50%, #92400e 100%);
+        border-color: rgba(251, 191, 36, 0.6);
+        box-shadow: 0 8px 24px rgba(217, 119, 6, 0.4);
+    }
+
+    /* Room Code Display */
+    .room-code-display {
+        text-align: center;
+        padding: 24px;
+        background: rgba(26, 15, 10, 0.8);
+        border-radius: 12px;
+        border: 2px solid rgba(139, 98, 66, 0.4);
+        margin-bottom: 24px;
+    }
+
+    .room-code-label {
+        font-size: 0.9rem;
+        color: #fde68a;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .room-code {
+        font-family: 'Righteous', sans-serif;
+        font-size: 3rem;
+        color: #fbbf24;
+        letter-spacing: 0.3em;
+        text-shadow: 2px 2px 0 rgba(120, 53, 15, 0.5);
+    }
+
+    .join-instruction {
+        font-size: 0.95rem;
+        color: rgba(253, 230, 138, 0.8);
+        margin-top: 12px;
     }
 
     label {
         display: block;
-        color: #bcaaa4;
+        color: #fde68a;
         font-weight: 700;
         margin-bottom: 12px;
         font-size: 0.9rem;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.1em;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     }
 
     input[type="text"],
     select,
     textarea {
         width: 100%;
-        padding: 14px 16px;
-        background: rgba(62, 39, 35, 0.8);
-        border: 2px solid rgba(161, 136, 127, 0.4);
-        border-radius: 8px;
-        color: #d7ccc8;
-        font-size: 1rem;
-        font-family: 'Archivo', sans-serif;
+        padding: 15px 18px;
+        background: 
+            linear-gradient(135deg, rgba(26, 15, 10, 0.95) 0%, rgba(35, 20, 13, 0.98) 100%);
+        border: 2.5px solid rgba(139, 98, 66, 0.5);
+        border-radius: 10px;
+        color: #fde68a;
+        font-size: 1.05rem;
+        font-family: 'Cabin', sans-serif;
         font-weight: 600;
-        transition: all 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 
+            inset 0 2px 6px rgba(0,0,0,0.4),
+            0 1px 0 rgba(251, 191, 36, 0.05);
     }
 
     input[type="text"]:focus,
     select:focus,
     textarea:focus {
         outline: none;
-        background: rgba(62, 39, 35, 1);
-        border-color: #a1887f;
-        box-shadow: 0 0 0 3px rgba(161, 136, 127, 0.2);
+        background: rgba(26, 15, 10, 1);
+        border-color: #d97706;
+        box-shadow: 
+            0 0 0 4px rgba(217, 119, 6, 0.25),
+            inset 0 2px 6px rgba(0,0,0,0.5),
+            0 0 20px rgba(217, 119, 6, 0.2);
+        transform: translateY(-1px);
     }
 
     textarea {
@@ -182,39 +370,70 @@
 
     .btn {
         width: 100%;
-        padding: 18px 28px;
-        background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
-        color: #efebe9;
-        border: 2px solid rgba(188, 170, 164, 0.3);
-        border-radius: 10px;
-        font-size: 1.15rem;
+        padding: 20px 32px;
+        background: 
+            linear-gradient(135deg, #d97706 0%, #b45309 50%, #92400e 100%);
+        color: #fff;
+        border: 3px solid rgba(251, 191, 36, 0.4);
+        border-radius: 12px;
+        font-size: 1.2rem;
         font-weight: 700;
         cursor: pointer;
         font-family: 'Righteous', sans-serif;
-        letter-spacing: 0.05em;
-        transition: all 0.2s;
-        box-shadow: 0 6px 20px rgba(109, 76, 65, 0.4);
+        letter-spacing: 0.06em;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 
+            0 8px 24px rgba(217, 119, 6, 0.5),
+            inset 0 1px 0 rgba(251, 191, 36, 0.3),
+            inset 0 -2px 0 rgba(120, 53, 15, 0.5);
         margin-top: 16px;
+        position: relative;
+        overflow: hidden;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+        left: 100%;
     }
 
     .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 28px rgba(109, 76, 65, 0.5);
-        border-color: rgba(188, 170, 164, 0.5);
+        transform: translateY(-3px);
+        box-shadow: 
+            0 12px 32px rgba(217, 119, 6, 0.6),
+            inset 0 1px 0 rgba(251, 191, 36, 0.4),
+            inset 0 -2px 0 rgba(120, 53, 15, 0.6);
+        border-color: rgba(251, 191, 36, 0.6);
     }
 
     .btn:active {
-        transform: translateY(0);
+        transform: translateY(-1px);
     }
 
     .btn-secondary {
-        background: linear-gradient(135deg, #5d4037 0%, #4e342e 100%);
-        border-color: rgba(121, 85, 72, 0.3);
-        box-shadow: 0 6px 20px rgba(78, 52, 46, 0.4);
+        background: linear-gradient(135deg, #78350f 0%, #5c2d0e 50%, #451a03 100%);
+        border-color: rgba(146, 64, 14, 0.4);
+        box-shadow: 
+            0 8px 24px rgba(120, 53, 15, 0.5),
+            inset 0 1px 0 rgba(146, 64, 14, 0.3),
+            inset 0 -2px 0 rgba(69, 26, 3, 0.5);
     }
 
     .btn-secondary:hover {
-        box-shadow: 0 10px 28px rgba(78, 52, 46, 0.5);
+        box-shadow: 
+            0 12px 32px rgba(120, 53, 15, 0.6),
+            inset 0 1px 0 rgba(146, 64, 14, 0.4),
+            inset 0 -2px 0 rgba(69, 26, 3, 0.6);
     }
 
     .btn:disabled {
@@ -225,7 +444,7 @@
 
     .btn-small {
         width: auto;
-        padding: 12px 24px;
+        padding: 13px 26px;
         font-size: 0.95rem;
         margin-top: 0;
         margin-left: 12px;
@@ -237,205 +456,294 @@
     }
 
     .player-input-container input {
-        margin: 0;
+        margin-bottom: 0;
     }
 
-    .players-list {
-        background: rgba(62, 39, 35, 0.5);
-        border-radius: 10px;
-        padding: 16px;
-        margin-top: 16px;
-        border: 1px solid rgba(161, 136, 127, 0.2);
-        max-height: 300px;
-        overflow-y: auto;
+    #players-list-setup {
+        margin-top: 20px;
     }
 
     .player-item {
-        padding: 12px 18px;
-        margin-bottom: 10px;
-        background: linear-gradient(135deg, rgba(141, 110, 99, 0.3), rgba(109, 76, 65, 0.3));
-        border-radius: 8px;
+        background: rgba(26, 15, 10, 0.7);
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        border-radius: 10px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 1px solid rgba(161, 136, 127, 0.3);
-        animation: slideIn 0.3s ease;
+        border: 2px solid rgba(139, 98, 66, 0.3);
+        box-shadow: 
+            0 4px 12px rgba(0,0,0,0.4),
+            inset 0 1px 0 rgba(251, 191, 36, 0.05);
+        transition: all 0.2s;
     }
 
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(-20px); }
-        to { opacity: 1; transform: translateX(0); }
+    .player-item:hover {
+        border-color: rgba(139, 98, 66, 0.5);
+        transform: translateX(4px);
     }
 
     .player-name {
+        color: #fde68a;
         font-weight: 700;
-        color: #d7ccc8;
         font-size: 1.05rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     }
 
     .remove-btn {
-        background: rgba(141, 110, 99, 0.6);
-        color: #efebe9;
-        border: 1px solid rgba(188, 170, 164, 0.3);
-        padding: 6px 14px;
-        border-radius: 6px;
+        background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+        color: #fef3c7;
+        border: 2px solid rgba(153, 27, 27, 0.4);
+        padding: 8px 18px;
+        border-radius: 8px;
         cursor: pointer;
+        font-weight: 600;
         font-size: 0.85rem;
-        font-weight: 700;
         transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(153, 27, 27, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
     .remove-btn:hover {
-        background: rgba(141, 110, 99, 0.8);
-        transform: scale(1.05);
-    }
-
-    .name-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 16px;
-        margin: 28px 0;
-    }
-
-    .name-button {
-        padding: 32px 20px;
-        background: linear-gradient(135deg, rgba(141, 110, 99, 0.4), rgba(109, 76, 65, 0.4));
-        backdrop-filter: blur(10px);
-        color: #d7ccc8;
-        border: 2px solid rgba(161, 136, 127, 0.4);
-        border-radius: 10px;
-        font-size: 1.25rem;
-        font-weight: 700;
-        cursor: pointer;
-        font-family: 'Righteous', sans-serif;
-        letter-spacing: 0.03em;
-        transition: all 0.2s;
-        min-height: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        box-shadow: 0 6px 20px rgba(109, 76, 65, 0.3);
-    }
-
-    .name-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 28px rgba(109, 76, 65, 0.5);
-        border-color: rgba(161, 136, 127, 0.6);
-        background: linear-gradient(135deg, rgba(141, 110, 99, 0.5), rgba(109, 76, 65, 0.5));
-    }
-
-    .name-button:active {
-        transform: translateY(-1px);
-    }
-
-    .name-button.viewed {
-        background: linear-gradient(135deg, rgba(78, 52, 46, 0.4), rgba(62, 39, 35, 0.4));
-        border-color: rgba(93, 64, 55, 0.3);
-        color: #795548;
-        opacity: 0.6;
-    }
-
-    .word-reveal {
-        text-align: center;
-        padding: 40px 20px;
-    }
-
-    .reveal-box {
-        background: rgba(78, 52, 46, 0.6);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(161, 136, 127, 0.4);
-        border-radius: 12px;
-        padding: 80px 40px;
-        margin: 40px 0;
-        cursor: pointer;
-        transition: all 0.3s;
-        box-shadow: 0 10px 40px rgba(109, 76, 65, 0.3);
-    }
-
-    .reveal-box:hover {
-        transform: scale(1.02);
-        border-color: rgba(161, 136, 127, 0.6);
-        box-shadow: 0 14px 50px rgba(109, 76, 65, 0.5);
-    }
-
-    .reveal-box p {
-        font-size: 1.5rem;
-        color: #bcaaa4;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-    }
-
-    .question-display {
-        background: rgba(78, 52, 46, 0.6);
-        backdrop-filter: blur(10px);
-        padding: 40px 30px;
-        border-radius: 12px;
-        margin: 30px 0;
-        box-shadow: 0 12px 40px rgba(109, 76, 65, 0.4);
-        border: 2px solid rgba(161, 136, 127, 0.4);
-    }
-
-    .question-text {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #d7ccc8;
-        text-align: center;
-        line-height: 1.4;
-        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(153, 27, 27, 0.5);
     }
 
     .info-text {
-        color: #a1887f;
+        color: rgba(253, 230, 138, 0.6);
+        text-align: center;
+        padding: 24px;
+        font-style: italic;
         font-size: 1rem;
-        margin-top: 16px;
-        text-align: center;
-        line-height: 1.6;
-        font-weight: 600;
-    }
-
-    .warning-text {
-        background: rgba(109, 76, 65, 0.4);
-        border: 2px solid rgba(161, 136, 127, 0.5);
-        color: #bcaaa4;
-        padding: 16px;
-        border-radius: 8px;
-        margin: 24px 0;
-        text-align: center;
-        font-weight: 700;
-        box-shadow: 0 6px 20px rgba(109, 76, 65, 0.3);
-    }
-
-    .progress-indicator {
-        background: rgba(78, 52, 46, 0.6);
-        border: 2px solid rgba(161, 136, 127, 0.3);
-        border-radius: 8px;
-        padding: 16px;
-        margin: 20px 0;
-        text-align: center;
-        font-weight: 700;
-        color: #bcaaa4;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-size: 0.95rem;
-    }
-
-    .progress-indicator.complete {
-        background: rgba(56, 142, 60, 0.3);
-        color: #a5d6a7;
-        border-color: rgba(129, 199, 132, 0.4);
     }
 
     .hidden {
-        display: none !important;
+        display: none;
     }
 
-    @media (max-width: 600px) {
-        .container {
-            padding: 36px 20px;
-        }
+    .question-box {
+        background: 
+            linear-gradient(135deg, rgba(61, 40, 23, 0.9) 0%, rgba(74, 51, 32, 0.95) 100%);
+        padding: 48px 40px;
+        border-radius: 20px;
+        text-align: center;
+        border: 4px solid rgba(139, 98, 66, 0.5);
+        box-shadow: 
+            0 16px 48px rgba(0, 0, 0, 0.8),
+            inset 0 2px 0 rgba(251, 191, 36, 0.15),
+            inset 0 -4px 12px rgba(0, 0, 0, 0.4);
+        margin-bottom: 28px;
+        position: relative;
+    }
 
+    .question-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                rgba(0,0,0,0.03) 1px,
+                transparent 2px,
+                transparent 120px,
+                rgba(139, 98, 66, 0.06) 122px,
+                transparent 124px
+            );
+        border-radius: 20px;
+        pointer-events: none;
+    }
+
+    .reveal-container h3 {
+        font-family: 'Cabin', sans-serif;
+        font-size: 1.4rem;
+        color: #fde68a;
+        margin-bottom: 20px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .player-display {
+        font-family: 'Righteous', sans-serif;
+        font-size: 3rem;
+        color: #fbbf24;
+        margin-bottom: 32px;
+        text-shadow: 
+            2px 2px 0 rgba(120, 53, 15, 0.5),
+            0 0 30px rgba(251, 191, 36, 0.4);
+        animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+        0%, 100% { text-shadow: 2px 2px 0 rgba(120, 53, 15, 0.5), 0 0 30px rgba(251, 191, 36, 0.4); }
+        50% { text-shadow: 2px 2px 0 rgba(120, 53, 15, 0.5), 0 0 50px rgba(251, 191, 36, 0.6); }
+    }
+
+    .question-text {
+        font-family: 'Cabin', sans-serif;
+        font-size: 1.6rem;
+        color: #fef3c7;
+        line-height: 1.6;
+        margin-bottom: 24px;
+        font-weight: 600;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+        font-style: italic;
+    }
+
+    .question-text::before,
+    .question-text::after {
+        content: '"';
+        color: #d97706;
+        font-size: 2rem;
+        font-style: normal;
+    }
+
+    .discussion-info {
+        background: rgba(26, 15, 10, 0.8);
+        padding: 32px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        border: 2.5px solid rgba(139, 98, 66, 0.4);
+        box-shadow: 
+            0 8px 24px rgba(0,0,0,0.6),
+            inset 0 1px 0 rgba(251, 191, 36, 0.08);
+    }
+
+    .discussion-info p {
+        color: #fde68a;
+        font-size: 1.15rem;
+        line-height: 1.8;
+        margin-bottom: 16px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .discussion-info p:last-child {
+        margin-bottom: 0;
+    }
+
+    .reveal-box {
+        background: 
+            linear-gradient(135deg, rgba(217, 119, 6, 0.25) 0%, rgba(146, 64, 14, 0.3) 100%);
+        padding: 40px;
+        border-radius: 16px;
+        margin-bottom: 28px;
+        border: 3px solid rgba(251, 191, 36, 0.5);
+        box-shadow: 
+            0 12px 36px rgba(217, 119, 6, 0.4),
+            inset 0 2px 0 rgba(251, 191, 36, 0.2);
+        text-align: center;
+    }
+
+    .reveal-box h3 {
+        font-family: 'Righteous', sans-serif;
+        font-size: 1.8rem;
+        color: #fef3c7;
+        margin-bottom: 16px;
+        text-shadow: 2px 2px 0 rgba(120, 53, 15, 0.5);
+    }
+
+    .reveal-box .question-preview {
+        font-size: 1.3rem;
+        color: #fde68a;
+        font-style: italic;
+        margin-bottom: 8px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .result-announcement {
+        background: 
+            linear-gradient(135deg, rgba(217, 119, 6, 0.3) 0%, rgba(146, 64, 14, 0.35) 100%);
+        padding: 56px 40px;
+        border-radius: 20px;
+        text-align: center;
+        margin-bottom: 28px;
+        border: 4px solid rgba(251, 191, 36, 0.6);
+        box-shadow: 
+            0 16px 48px rgba(217, 119, 6, 0.5),
+            inset 0 2px 0 rgba(251, 191, 36, 0.3);
+        animation: result-reveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes result-reveal {
+        0% { transform: scale(0.8); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .result-announcement h3 {
+        font-family: 'Cabin', sans-serif;
+        font-size: 1.5rem;
+        color: #fef3c7;
+        margin-bottom: 20px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .odd-one-name {
+        font-family: 'Righteous', sans-serif;
+        font-size: 3.5rem;
+        color: #fbbf24;
+        margin-bottom: 28px;
+        text-shadow: 
+            3px 3px 0 rgba(120, 53, 15, 0.6),
+            0 0 40px rgba(251, 191, 36, 0.6);
+        animation: name-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+    }
+
+    @keyframes name-pop {
+        0% { transform: scale(0); }
+        100% { transform: scale(1); }
+    }
+
+    .button-group {
+        display: flex;
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .button-group .btn {
+        margin-top: 0;
+    }
+
+    .steam {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 80px;
+        pointer-events: none;
+        opacity: 0.15;
+    }
+
+    .steam-particle {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 8px;
+        height: 8px;
+        background: radial-gradient(circle, rgba(251, 191, 36, 0.8), transparent);
+        border-radius: 50%;
+        animation: rise-steam 4s ease-in-out infinite;
+        opacity: 0;
+    }
+
+    .steam-particle:nth-child(1) { left: 30%; animation-delay: 0s; }
+    .steam-particle:nth-child(2) { left: 50%; animation-delay: 1.3s; }
+    .steam-particle:nth-child(3) { left: 70%; animation-delay: 2.6s; }
+
+    @keyframes rise-steam {
+        0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+        20% { opacity: 0.6; }
+        100% { transform: translateY(-80px) translateX(10px) scale(0.3); opacity: 0; }
+    }
+
+    @media (max-width: 640px) {
         h1 {
             font-size: 3rem;
         }
@@ -444,205 +752,310 @@
             font-size: 2rem;
         }
 
-        .name-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .name-button {
-            font-size: 1.05rem;
-            min-height: 85px;
-            padding: 24px 16px;
+        .player-display {
+            font-size: 2.2rem;
         }
 
         .question-text {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
+        }
+
+        .setup-section,
+        .question-box {
+            padding: 24px;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .btn-small {
+            width: 100%;
+            margin-left: 0;
+            margin-top: 12px;
+        }
+
+        .room-code {
+            font-size: 2.2rem;
         }
     }
 </style>
 </head>
 <body>
-<div class="warm-light"></div>
-<div class="steam steam-1">☕</div>
-<div class="steam steam-2">☕</div>
+
+<div class="record record-1"></div>
+<div class="record record-2"></div>
+<div class="light-spot light-spot-1"></div>
+<div class="light-spot light-spot-2"></div>
+
+<div class="steam">
+    <div class="steam-particle"></div>
+    <div class="steam-particle"></div>
+    <div class="steam-particle"></div>
+</div>
+
 <div class="container">
+    <!-- Mode Selection Screen -->
+    <div id="mode-screen">
+        <h1>Odd One Out</h1>
+        <p class="subtitle">Choose your game mode</p>
 
-<!-- Setup Screen -->
-<div id="setup-screen">
-<h1>ODD ONE OUT</h1>
-<p class="info-text" style="margin-bottom: 20px;">Everyone gets the same question... except one person!</p>
+        <div class="setup-section">
+            <div class="mode-toggle">
+                <button class="mode-btn active" onclick="selectMode('local')">
+                    Single Device<br>
+                    <small style="font-size: 0.85rem; opacity: 0.8;">Pass & play</small>
+                </button>
+                <button class="mode-btn" onclick="selectMode('multiplayer')">
+                    Multiplayer<br>
+                    <small style="font-size: 0.85rem; opacity: 0.8;">Each person's phone</small>
+                </button>
+            </div>
+            <button class="btn" onclick="confirmMode()">Continue</button>
+        </div>
+    </div>
 
-<div class="setup-section">
-<label>Add Players (minimum 3)</label>
-<div class="player-input-container">
-<input type="text" id="new-player-name" placeholder="Enter player name..." maxlength="20">
-<button class="btn btn-small" onclick="addPlayer()">Add</button>
-</div>
-</div>
+    <!-- Multiplayer Join Screen -->
+    <div id="join-screen" class="hidden">
+        <h1>Odd One Out</h1>
+        <p class="subtitle">Join or create a room</p>
 
-<div class="players-list" id="players-list-setup">
-<p class="info-text">No players added yet</p>
-</div>
+        <div class="setup-section">
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="create-room-btn" onclick="selectJoinMode('create')">
+                    Create Room
+                </button>
+                <button class="mode-btn" id="join-room-btn" onclick="selectJoinMode('join')">
+                    Join Room
+                </button>
+            </div>
 
-<div class="setup-section">
-<label for="category">Theme</label>
-<select id="category">
-<option value="love">💕 Love & Relationships</option>
-<option value="daily">☀️ Daily Life</option>
-<option value="guilty">😈 Guilty Pleasures</option>
-<option value="dark">🌑 Dark Humor</option>
-<option value="opinions">💭 Hot Takes</option>
-<option value="personal">🔮 Personal Questions</option>
-</select>
-</div>
+            <div id="create-room-section">
+                <label for="host-name">Your Name</label>
+                <input type="text" id="host-name" placeholder="Enter your name">
+                <button class="btn" onclick="createRoom()">Create Room</button>
+            </div>
 
-<button class="btn" onclick="startGame()">Start Game</button>
-</div>
+            <div id="join-room-section" class="hidden">
+                <label for="join-code">Room Code</label>
+                <input type="text" id="join-code" placeholder="Enter 4-digit code" maxlength="4">
+                <label for="player-name">Your Name</label>
+                <input type="text" id="player-name" placeholder="Enter your name">
+                <button class="btn" onclick="joinRoom()">Join Room</button>
+            </div>
+        </div>
+    </div>
 
-<!-- Question Reveal Screen -->
-<div id="question-screen" class="hidden">
-<h2 id="current-player-name"></h2>
+    <!-- Multiplayer Lobby Screen -->
+    <div id="lobby-screen" class="hidden">
+        <h1>Odd One Out</h1>
+        <p class="subtitle">Waiting for players...</p>
 
-<div id="reveal-container">
-<div class="reveal-box" onclick="revealQuestion()">
-<p>Tap to see your question</p>
-</div>
-</div>
+        <div class="room-code-display">
+            <div class="room-code-label">Room Code</div>
+            <div class="room-code" id="display-room-code">----</div>
+            <div class="join-instruction">Share this code with friends to join</div>
+        </div>
 
-<div id="question-container" class="hidden">
-<div class="question-display">
-<div class="question-text" id="question-text"></div>
-</div>
-<p class="info-text">Remember this question and think of your answer!</p>
-</div>
+        <div class="setup-section">
+            <label>Players in Room</label>
+            <div id="lobby-players-list">
+                <p class="info-text">Waiting for players...</p>
+            </div>
+        </div>
 
-<button class="btn btn-secondary" onclick="nextPlayer()" id="next-btn" disabled>Next Player</button>
-</div>
+        <div class="setup-section" id="host-controls" class="hidden">
+            <label for="lobby-category">Choose Category</label>
+            <select id="lobby-category">
+                <option value="love">Love & Relationships 💕</option>
+                <option value="social">Social Life 👥</option>
+                <option value="lifestyle">Lifestyle & Vibes ✨</option>
+                <option value="dark">Dark & Deep 🌑</option>
+                <option value="opinions">Hot Takes & Opinions 🔥</option>
+                <option value="personal">Personal Growth 🌱</option>
+            </select>
+            <button class="btn" onclick="startMultiplayerGame()">Start Game</button>
+        </div>
+    </div>
 
-<!-- Discussion Screen -->
-<div id="discussion-screen" class="hidden">
-<h2>💬 Discussion Time!</h2>
-<div style="background: rgba(68, 47, 38, 0.6); padding: 30px; border-radius: 12px; margin: 30px 0; border: 2px solid rgba(217, 119, 6, 0.3);">
-<p style="color: #fcd34d; font-size: 1.2rem; text-align: center; margin-bottom: 20px; font-weight: 600;">
-Everyone share your answers out loud!
-</p>
-<p class="info-text">
-Try to figure out who had a different question based on their answer
-</p>
-</div>
-<button class="btn" onclick="showQuestionsReveal()">Show Questions</button>
-</div>
+    <!-- Local Setup Screen -->
+    <div id="setup-screen" class="hidden">
+        <h1>Odd One Out</h1>
+        <p class="subtitle">One player gets a different question. Can you find them?</p>
 
-<!-- Questions Reveal Screen -->
-<div id="questions-reveal-screen" class="hidden">
-<h2>The Questions Were...</h2>
+        <div class="setup-section">
+            <label for="new-player-name">Add Players</label>
+            <div class="player-input-container">
+                <input type="text" id="new-player-name" placeholder="Enter player name">
+                <button class="btn btn-small" onclick="addPlayer()">Add</button>
+            </div>
+            <div id="players-list-setup">
+                <p class="info-text">No players added yet</p>
+            </div>
+        </div>
 
-<div style="background: rgba(68, 47, 38, 0.6); padding: 25px; border-radius: 12px; margin: 20px 0; border: 2px solid rgba(217, 119, 6, 0.4);">
-<p style="color: #fbbf24; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; font-weight: 600;">
-Most Players
-</p>
-<p style="color: #fcd34d; font-size: 1.3rem; font-weight: 600; line-height: 1.5;" id="normal-question-reveal"></p>
-</div>
+        <div class="setup-section">
+            <label for="category">Choose Category</label>
+            <select id="category">
+                <option value="love">Love & Relationships 💕</option>
+                <option value="social">Social Life 👥</option>
+                <option value="lifestyle">Lifestyle & Vibes ✨</option>
+                <option value="dark">Dark & Deep 🌑</option>
+                <option value="opinions">Hot Takes & Opinions 🔥</option>
+                <option value="personal">Personal Growth 🌱</option>
+            </select>
+        </div>
 
-<div style="background: rgba(146, 64, 14, 0.4); padding: 25px; border-radius: 12px; margin: 20px 0; border: 2px solid rgba(217, 119, 6, 0.5);">
-<p style="color: #fbbf24; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; font-weight: 600;">
-One Player
-</p>
-<p style="color: #fcd34d; font-size: 1.3rem; font-weight: 600; line-height: 1.5;" id="odd-question-preview"></p>
-</div>
+        <button class="btn" onclick="startGame()">Start Game</button>
+    </div>
 
-<p class="info-text" style="margin: 30px 0;">Ready to see who had the different question?</p>
+    <!-- Question Screen -->
+    <div id="question-screen" class="hidden">
+        <h2>Your Turn</h2>
 
-<button class="btn" onclick="showOddOneOut()">Reveal the Odd One Out</button>
-</div>
+        <div class="question-box" id="reveal-container">
+            <div class="reveal-container">
+                <h3>Get ready...</h3>
+                <div class="player-display" id="current-player-name"></div>
+                <button class="btn" onclick="revealQuestion()">Show My Question</button>
+            </div>
+        </div>
 
-<!-- Results Screen -->
-<div id="results-screen" class="hidden">
-<h2>⚠️ The Odd One Out Was...</h2>
+        <div class="question-box hidden" id="question-container">
+            <p class="question-text" id="question-text"></p>
+            <button class="btn btn-secondary" id="next-btn" onclick="nextPlayer()">Next Player</button>
+        </div>
+    </div>
 
-<div style="background: rgba(146, 64, 14, 0.4); padding: 40px 25px; border-radius: 12px; margin: 30px 0; border: 3px solid rgba(217, 119, 6, 0.6); box-shadow: 0 8px 24px rgba(217, 119, 6, 0.4);">
-<p style="text-align: center; color: #fcd34d; font-weight: 700; font-size: 3rem; margin-bottom: 20px; font-family: 'Righteous', sans-serif;" id="odd-one-name"></p>
-<div style="background: rgba(68, 47, 38, 0.6); padding: 20px; border-radius: 12px; margin-top: 20px;">
-<p style="color: #fbbf24; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600;">
-Their Question
-</p>
-<p style="color: #fcd34d; font-size: 1.2rem; font-weight: 600; line-height: 1.5;" id="odd-question-reveal"></p>
-</div>
-</div>
+    <!-- Multiplayer Question Screen -->
+    <div id="multiplayer-question-screen" class="hidden">
+        <h2>Your Question</h2>
 
-<button class="btn" onclick="playAgain()">Play Again</button>
-<button class="btn btn-secondary" onclick="resetGame()">New Players</button>
-</div>
+        <div class="question-box">
+            <p class="question-text" id="multiplayer-question-text"></p>
+            <div class="info-text">Waiting for all players to see their questions...</div>
+        </div>
+    </div>
+
+    <!-- Discussion Screen -->
+    <div id="discussion-screen" class="hidden">
+        <h2>Time to Discuss</h2>
+
+        <div class="discussion-info">
+            <p><strong>Share your answers</strong><br>Everyone takes turns sharing their answer to their question.</p>
+            <p><strong>Find the odd one</strong><br>Try to figure out who got a different question!</p>
+            <p><strong>Vote together</strong><br>When you're ready, reveal the questions and see who the odd one really was.</p>
+        </div>
+
+        <button class="btn" onclick="showQuestionsReveal()">Reveal the Questions</button>
+    </div>
+
+    <!-- Questions Reveal Screen -->
+    <div id="questions-reveal-screen" class="hidden">
+        <h2>The Majority Got...</h2>
+
+        <div class="reveal-box">
+            <p class="question-preview" id="normal-question-reveal"></p>
+        </div>
+
+        <button class="btn" onclick="showOddOneOut()">Reveal the Odd One Out</button>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="hidden">
+        <h2>The Odd One Out Was...</h2>
+
+        <div class="result-announcement">
+            <h3>It was...</h3>
+            <div class="odd-one-name" id="odd-one-name"></div>
+        </div>
+
+        <div class="reveal-box">
+            <h3>Their question was:</h3>
+            <p class="question-preview" id="odd-question-reveal"></p>
+        </div>
+
+        <div class="button-group">
+            <button class="btn" onclick="playAgain()">Play Again</button>
+            <button class="btn btn-secondary" onclick="resetGame()">New Game</button>
+        </div>
+    </div>
 </div>
 
 <script>
+    // Firebase Configuration
+   const firebaseConfig = {
+  apiKey: "AIzaSyBNLimf247SRwWbn3gCFOz4agt9AsoogYI",
+  authDomain: "dynamitetwinkie-7b197.firebaseapp.com",
+  databaseURL: "https://dynamitetwinkie-7b197-default-rtdb.firebaseio.com",
+  projectId: "dynamitetwinkie-7b197",
+  storageBucket: "dynamitetwinkie-7b197.firebasestorage.app",
+  messagingSenderId: "644017159848",
+  appId: "1:644017159848:web:45d61846f1977ba650cc9d"
+};
+
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     const questionDatabase = {
         love: {
             normal: [
+                "What's your biggest ick in a relationship?",
                 "What's your ideal first date?",
-                "What do you find most attractive in someone?",
-                "What's your biggest relationship green flag?",
-                "How do you show someone you care about them?",
-                "What's the best compliment you've ever received?",
-                "What makes you feel loved?",
-                "When do you know you can trust someone?",
-                "What's your idea of a romantic gesture?",
-                "What do you value most in a friendship?",
-                "What makes you feel appreciated?"
+                "What's a relationship dealbreaker for you?",
+                "What's your love language?",
+                "What's something that instantly attracts you to someone?",
+                "What's your type?",
+                "How do you know you're catching feelings?",
+                "What's your relationship red flag?",
+                "What's the worst date you've been on?",
+                "What's your ideal partner like?"
             ],
             odd: [
-                "What's your ideal Valentine's Day?",
-                "What's your biggest turn-on?",
-                "What's your biggest relationship red flag?",
-                "How do you know when someone likes you?",
-                "What's the best gift you've ever received?",
-                "What makes you feel special?",
-                "When do you know you like someone?",
-                "What's the most romantic place you've been?",
-                "What do you look for in a best friend?",
-                "What makes you feel confident?"
+                "What's your biggest green flag in a relationship?",
+                "What's your worst first date?",
+                "What's something you absolutely need in a relationship?",
+                "What's your least favorite love language?",
+                "What instantly turns you off about someone?",
+                "Who's NOT your type?",
+                "How do you know you're losing feelings?",
+                "What's your relationship green flag?",
+                "What's the best date you've been on?",
+                "What qualities do you avoid in a partner?"
             ]
         },
-        daily: {
+        social: {
             normal: [
-                "What's your morning routine?",
-                "What's your favorite meal to cook?",
-                "How do you relax after a stressful day?",
-                "What's your go-to comfort activity?",
-                "What's your favorite way to spend a Sunday?",
-                "What do you always have for breakfast?",
-                "How do you motivate yourself?",
-                "What's your favorite part of the day?",
-                "What do you do when you can't sleep?",
-                "How do you treat yourself?"
+                "What's something embarrassing you've done in public?",
+                "What's your most awkward social moment?",
+                "What's a secret you've never told anyone?",
+                "What's something you do when you're alone that you'd never admit?",
+                "What's your most cringe memory?",
+                "What's something you've lied about?",
+                "What's the most trouble you've gotten into?",
+                "What's something sketchy you've done?",
+                "What's your guilty pleasure no one knows about?",
+                "What's your most chaotic friend story?"
             ],
             odd: [
-                "What's your nighttime routine?",
-                "What's your favorite meal to order?",
-                "How do you procrastinate when stressed?",
-                "What's your go-to boredom activity?",
-                "What's your favorite way to spend a Saturday?",
-                "What do you always have for dinner?",
-                "How do you avoid work?",
-                "What's your least productive time of day?",
-                "What do you do when you're bored?",
-                "How do you waste money?"
+                "What's your proudest public moment?",
+                "What's your smoothest social moment?",
+                "What's something you openly share with everyone?",
+                "What's something you do publicly that you're proud of?",
+                "What's your favorite memory?",
+                "What's something you've always been honest about?",
+                "What's the most wholesome thing you've done?",
+                "What's something genuine you've done?",
+                "What's your healthy habit everyone knows about?",
+                "What's your most heartwarming friend story?"
             ]
         },
-        guilty: {
+        lifestyle: {
             normal: [
-                "What's your guilty pleasure show?",
-                "What's a song you secretly love?",
-                "What's your go-to junk food?",
-                "What's something childish you still enjoy?",
-                "What's your trashy entertainment vice?",
-                "What's your favorite way to waste time?",
-                "What's something you enjoy that people judge you for?",
-                "What's your secret indulgence?",
-                "What's your favorite cringe content?",
-                "What's something you hide from people?"
-            ],
-            odd: [
+                "What's your comfort food?",
+                "What's your go-to late-night snack?",
                 "What show are you currently binging?",
                 "What song is stuck in your head right now?",
                 "What's your late-night craving?",
@@ -653,6 +1066,20 @@ Their Question
                 "What's your daily treat?",
                 "What's your favorite wholesome content?",
                 "What's a talent you have that surprises people?"
+            ],
+            odd: [
+                "What food do you secretly hate?",
+                "What's a snack you pretend to like?",
+                "What show does everyone love that you can't stand?",
+                "What popular song do you actually hate?",
+                "What food makes you nauseous?",
+                "What trend are you glad is over?",
+                "What's a show you hate-watch?",
+                "What's your least productive habit?",
+                "What's something you're surprisingly bad at?",
+                "What's your daily annoyance?",
+                "What's content you find cringe?",
+                "What's something you fake being good at?"
             ]
         },
         dark: {
@@ -736,16 +1163,219 @@ Their Question
     };
 
     let gameState = {
+        mode: 'local', // 'local' or 'multiplayer'
         players: [],
         category: 'love',
         currentPlayerIndex: 0,
         oddOneIndex: -1,
         normalQuestion: '',
         oddQuestion: '',
-        phase: 'setup'
+        phase: 'mode-selection',
+        roomCode: null,
+        isHost: false,
+        playerName: ''
     };
 
-    // Add player with Enter key
+    // Mode Selection
+    function selectMode(mode) {
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.mode-btn').classList.add('active');
+        gameState.mode = mode;
+    }
+
+    function confirmMode() {
+        if (gameState.mode === 'multiplayer') {
+            showScreen('join-screen');
+        } else {
+            showScreen('setup-screen');
+        }
+    }
+
+    // Multiplayer Join Mode
+    function selectJoinMode(mode) {
+        const createBtn = document.getElementById('create-room-btn');
+        const joinBtn = document.getElementById('join-room-btn');
+        const createSection = document.getElementById('create-room-section');
+        const joinSection = document.getElementById('join-room-section');
+
+        if (mode === 'create') {
+            createBtn.classList.add('active');
+            joinBtn.classList.remove('active');
+            createSection.classList.remove('hidden');
+            joinSection.classList.add('hidden');
+        } else {
+            joinBtn.classList.add('active');
+            createBtn.classList.remove('active');
+            joinSection.classList.remove('hidden');
+            createSection.classList.add('hidden');
+        }
+    }
+
+    // Generate 4-digit room code
+    function generateRoomCode() {
+        return Math.floor(1000 + Math.random() * 9000).toString();
+    }
+
+    // Create Room
+    function createRoom() {
+        const hostName = document.getElementById('host-name').value.trim();
+        
+        if (!hostName) {
+            alert('Please enter your name!');
+            return;
+        }
+
+        gameState.roomCode = generateRoomCode();
+        gameState.isHost = true;
+        gameState.playerName = hostName;
+
+        // Create room in Firebase
+        const roomRef = database.ref('rooms/' + gameState.roomCode);
+        roomRef.set({
+            host: hostName,
+            players: [hostName],
+            category: 'love',
+            gameStarted: false,
+            phase: 'lobby',
+            createdAt: Date.now()
+        }).then(() => {
+            // Listen for player updates
+            roomRef.on('value', (snapshot) => {
+                const roomData = snapshot.val();
+                if (roomData) {
+                    updateLobby(roomData);
+                }
+            });
+
+            document.getElementById('display-room-code').textContent = gameState.roomCode;
+            document.getElementById('host-controls').classList.remove('hidden');
+            showScreen('lobby-screen');
+        }).catch((error) => {
+            alert('Error creating room: ' + error.message);
+        });
+    }
+
+    // Join Room
+    function joinRoom() {
+        const roomCode = document.getElementById('join-code').value.trim();
+        const playerName = document.getElementById('player-name').value.trim();
+
+        if (!roomCode || roomCode.length !== 4) {
+            alert('Please enter a valid 4-digit room code!');
+            return;
+        }
+
+        if (!playerName) {
+            alert('Please enter your name!');
+            return;
+        }
+
+        gameState.roomCode = roomCode;
+        gameState.isHost = false;
+        gameState.playerName = playerName;
+
+        // Check if room exists
+        const roomRef = database.ref('rooms/' + roomCode);
+        roomRef.once('value').then((snapshot) => {
+            if (!snapshot.exists()) {
+                alert('Room not found! Check the code and try again.');
+                return;
+            }
+
+            const roomData = snapshot.val();
+            if (roomData.gameStarted) {
+                alert('Game has already started!');
+                return;
+            }
+
+            // Add player to room
+            const players = roomData.players || [];
+            if (players.includes(playerName)) {
+                alert('This name is already in use!');
+                return;
+            }
+
+            players.push(playerName);
+            roomRef.update({ players: players }).then(() => {
+                // Listen for updates
+                roomRef.on('value', (snapshot) => {
+                    const roomData = snapshot.val();
+                    if (roomData) {
+                        updateLobby(roomData);
+                        
+                        // If game started, show question
+                        if (roomData.gameStarted && roomData.phase === 'question') {
+                            showMultiplayerQuestion(roomData);
+                        }
+                    }
+                });
+
+                document.getElementById('display-room-code').textContent = roomCode;
+                showScreen('lobby-screen');
+            });
+        }).catch((error) => {
+            alert('Error joining room: ' + error.message);
+        });
+    }
+
+    // Update Lobby
+    function updateLobby(roomData) {
+        const playersList = document.getElementById('lobby-players-list');
+        if (!roomData.players || roomData.players.length === 0) {
+            playersList.innerHTML = '<p class="info-text">Waiting for players...</p>';
+            return;
+        }
+
+        playersList.innerHTML = roomData.players.map(player => `
+            <div class="player-item">
+                <span class="player-name">${player}${player === roomData.host ? ' (Host)' : ''}</span>
+            </div>
+        `).join('');
+    }
+
+    // Start Multiplayer Game
+    function startMultiplayerGame() {
+        const roomRef = database.ref('rooms/' + gameState.roomCode);
+        
+        roomRef.once('value').then((snapshot) => {
+            const roomData = snapshot.val();
+            const players = roomData.players || [];
+
+            if (players.length < 3) {
+                alert('You need at least 3 players!');
+                return;
+            }
+
+            const category = document.getElementById('lobby-category').value;
+            const questions = questionDatabase[category];
+            const normalIndex = Math.floor(Math.random() * questions.normal.length);
+            const oddIndex = Math.floor(Math.random() * questions.odd.length);
+            const oddOneIndex = Math.floor(Math.random() * players.length);
+
+            // Update room with game data
+            roomRef.update({
+                gameStarted: true,
+                phase: 'question',
+                category: category,
+                normalQuestion: questions.normal[normalIndex],
+                oddQuestion: questions.odd[oddIndex],
+                oddOneIndex: oddOneIndex,
+                oddOneName: players[oddOneIndex]
+            });
+        });
+    }
+
+    // Show Multiplayer Question
+    function showMultiplayerQuestion(roomData) {
+        const playerIndex = roomData.players.indexOf(gameState.playerName);
+        const isOddOne = playerIndex === roomData.oddOneIndex;
+        const question = isOddOne ? roomData.oddQuestion : roomData.normalQuestion;
+
+        document.getElementById('multiplayer-question-text').textContent = question;
+        showScreen('multiplayer-question-screen');
+    }
+
+    // LOCAL GAME FUNCTIONS (same as original)
     document.getElementById('new-player-name').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             addPlayer();
@@ -761,7 +1391,7 @@ Their Question
             return;
         }
 
-        if (gameState.players.includes(name)) {
+        i/f (gameState.players.includes(name)) {
             alert('This name is already added!');
             return;
         }
@@ -800,15 +1430,12 @@ Their Question
         gameState.category = document.getElementById('category').value;
         gameState.currentPlayerIndex = 0;
         
-        // Pick random questions
         const questions = questionDatabase[gameState.category];
         const normalIndex = Math.floor(Math.random() * questions.normal.length);
         const oddIndex = Math.floor(Math.random() * questions.odd.length);
         
         gameState.normalQuestion = questions.normal[normalIndex];
         gameState.oddQuestion = questions.odd[oddIndex];
-        
-        // Pick random odd one out
         gameState.oddOneIndex = Math.floor(Math.random() * gameState.players.length);
 
         showQuestion();
@@ -816,10 +1443,8 @@ Their Question
 
     function showQuestion() {
         const playerName = gameState.players[gameState.currentPlayerIndex];
-
         document.getElementById('current-player-name').textContent = playerName;
         
-        // Show reveal box, hide question
         document.getElementById('reveal-container').classList.remove('hidden');
         document.getElementById('question-container').classList.add('hidden');
         document.getElementById('next-btn').disabled = true;
@@ -833,7 +1458,6 @@ Their Question
 
         document.getElementById('question-text').textContent = question;
 
-        // Hide reveal box, show question
         document.getElementById('reveal-container').classList.add('hidden');
         document.getElementById('question-container').classList.remove('hidden');
         document.getElementById('next-btn').disabled = false;
@@ -843,7 +1467,6 @@ Their Question
         gameState.currentPlayerIndex++;
 
         if (gameState.currentPlayerIndex >= gameState.players.length) {
-            // Everyone has seen their question, go to discussion
             showDiscussion();
         } else {
             showQuestion();
@@ -856,7 +1479,6 @@ Their Question
 
     function showQuestionsReveal() {
         document.getElementById('normal-question-reveal').textContent = `"${gameState.normalQuestion}"`;
-        document.getElementById('odd-question-preview').textContent = `"${gameState.oddQuestion}"`;
         showScreen('questions-reveal-screen');
     }
 
@@ -877,16 +1499,28 @@ Their Question
     function resetGame() {
         gameState.currentPlayerIndex = 0;
         gameState.players = [];
-        showScreen('setup-screen');
+        showScreen('mode-screen');
         updatePlayersList();
     }
 
     function showScreen(screenId) {
-        const screens = ['setup-screen', 'question-screen', 'discussion-screen', 'questions-reveal-screen', 'results-screen'];
+        const screens = [
+            'mode-screen', 
+            'join-screen', 
+            'lobby-screen', 
+            'setup-screen', 
+            'question-screen', 
+            'multiplayer-question-screen',
+            'discussion-screen', 
+            'questions-reveal-screen', 
+            'results-screen'
+        ];
         screens.forEach(screen => {
-            document.getElementById(screen).classList.add('hidden');
+            const el = document.getElementById(screen);
+            if (el) el.classList.add('hidden');
         });
-        document.getElementById(screenId).classList.remove('hidden');
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) targetScreen.classList.remove('hidden');
     }
 </script>
 </body>
