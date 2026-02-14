@@ -996,13 +996,14 @@
 
 
     // Initialize Firebase
+    let database = null;
     try {
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        database = firebase.database();
         console.log('Firebase initialized successfully');
     } catch (error) {
         console.error('Firebase initialization error:', error);
-        const database = null;
+        console.log('Multiplayer features will not work without proper Firebase configuration');
     }
 
     const questionDatabase = {
@@ -1236,6 +1237,11 @@
             return;
         }
 
+        if (!database) {
+            alert('Firebase is not configured! Please follow the setup guide to enable multiplayer.\n\nYou need to:\n1. Create a Firebase project\n2. Copy your Firebase config\n3. Replace the placeholder config in this file');
+            return;
+        }
+
         gameState.roomCode = generateRoomCode();
         gameState.isHost = true;
         gameState.playerName = hostName;
@@ -1278,6 +1284,11 @@
 
         if (!playerName) {
             alert('Please enter your name!');
+            return;
+        }
+
+        if (!database) {
+            alert('Firebase is not configured! Please follow the setup guide to enable multiplayer.\n\nYou need to:\n1. Create a Firebase project\n2. Copy your Firebase config\n3. Replace the placeholder config in this file');
             return;
         }
 
