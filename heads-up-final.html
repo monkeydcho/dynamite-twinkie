@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Heads Up!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@300;400;900&family=Righteous&display=swap" rel="stylesheet">
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Londrina Solid', sans-serif;
+        background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+        min-height: 100vh;
+        padding: 0;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* Beach waves effect */
+    body::before {
+        content: '';
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 200px;
+        background: 
+            linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+        pointer-events: none;
+        animation: wave 8s ease-in-out infinite;
+    }
+
+    @keyframes wave {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(-50px); }
+    }
+
+    /* Sun */
+    .sun {
+        position: fixed;
+        top: 40px;
+        right: 60px;
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle, #ffe259 0%, #ffa751 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 60px rgba(255, 226, 89, 0.6);
+        pointer-events: none;
+        animation: pulse-sun 4s ease-in-out infinite;
+        z-index: 0;
+    }
+
+    @keyframes pulse-sun {
+        0%, 100% { transform: scale(1); opacity: 0.9; }
+        50% { transform: scale(1.1); opacity: 1; }
+    }
+
+    /* Floating summer elements */
+    .float-emoji {
+        position: fixed;
+        font-size: 3rem;
+        opacity: 0.2;
+        pointer-events: none;
+        animation: float-around 25s ease-in-out infinite;
+        z-index: 0;
+    }
+
+    .emoji-1 {
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .emoji-2 {
+        top: 60%;
+        right: 15%;
+        animation-delay: 5s;
+    }
+
+    .emoji-3 {
+        bottom: 25%;
+        left: 15%;
+        animation-delay: 10s;
+    }
+
+    @keyframes float-around {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(30px, -30px) rotate(10deg); }
+        50% { transform: translate(-20px, -50px) rotate(-5deg); }
+        75% { transform: translate(40px, -20px) rotate(15deg); }
+    }
+
+    .container {
+        max-width: 650px;
+        margin: 0 auto;
+        padding: 40px 24px;
+        position: relative;
+        z-index: 1;
+    }
+
+    h1 {
+        font-family: 'Righteous', sans-serif;
+        font-size: 5rem;
+        text-align: center;
+        margin-bottom: 16px;
+        color: #ffffff;
+        text-shadow: 
+            4px 4px 0 rgba(255, 167, 81, 0.8),
+            6px 6px 0 rgba(255, 107, 129, 0.6);
+        letter-spacing: 0.05em;
+        transform: rotate(-2deg);
+    }
+
+    h2 {
+        font-family: 'Righteous', sans-serif;
+        font-size: 2.8rem;
+        margin-bottom: 32px;
+        color: #ffffff;
+        text-align: center;
+        text-shadow: 3px 3px 0 rgba(58, 123, 213, 0.5);
+        transform: rotate(-1deg);
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #ffffff;
+        font-size: 1.4rem;
+        margin-bottom: 48px;
+        font-weight: 400;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        letter-spacing: 0.02em;
+    }
+
+    .setup-section {
+        margin-bottom: 24px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 28px;
+        border-radius: 20px;
+        box-shadow: 
+            0 10px 40px rgba(0, 0, 0, 0.2),
+            inset 0 -3px 0 rgba(255, 167, 81, 0.3);
+        border: 4px solid #ffffff;
+        transform: rotate(0.5deg);
+    }
+
+    label {
+        display: block;
+        color: #3a7bd5;
+        font-weight: 400;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+        letter-spacing: 0.03em;
+    }
+
+    input[type="text"],
+    select {
+        width: 100%;
+        padding: 14px 18px;
+        background: #fff5e1;
+        border: 3px solid #ffa751;
+        border-radius: 14px;
+        color: #333;
+        font-size: 1.1rem;
+        font-family: 'Londrina Solid', sans-serif;
+        font-weight: 400;
+        transition: all 0.2s;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+        outline: none;
+        background: #ffffff;
+        border-color: #ff6b81;
+        box-shadow: 0 0 0 4px rgba(255, 107, 129, 0.2);
+        transform: scale(1.01);
+    }
+
+    .btn {
+        width: 100%;
+        padding: 18px 32px;
+        background: linear-gradient(135deg, #ff6b81 0%, #ffa751 100%);
+        color: #ffffff;
+        border: 4px solid #ffffff;
+        border-radius: 16px;
+        font-size: 1.4rem;
+        font-weight: 900;
+        cursor: pointer;
+        font-family: 'Righteous', sans-serif;
+        transition: all 0.2s;
+        box-shadow: 0 6px 0 rgba(255, 107, 129, 0.4);
+        margin-top: 16px;
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 0 rgba(255, 107, 129, 0.5);
+    }
+
+    .btn:active {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 0 rgba(255, 107, 129, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+        box-shadow: 0 6px 0 rgba(58, 123, 213, 0.4);
+    }
+
+    .btn-secondary:hover {
+        box-shadow: 0 10px 0 rgba(58, 123, 213, 0.5);
+    }
+
+    .btn-secondary:active {
+        box-shadow: 0 4px 0 rgba(58, 123, 213, 0.4);
+    }
+
+    .btn-small {
+        width: auto;
+        padding: 12px 24px;
+        font-size: 1.1rem;
+        margin-top: 0;
+        margin-left: 12px;
+    }
+
+    .player-input-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .player-input-container input {
+        margin: 0;
+    }
+
+    .players-list {
+        background: #fff5e1;
+        border-radius: 14px;
+        padding: 16px;
+        margin-top: 16px;
+        border: 3px solid #ffa751;
+        max-height: 280px;
+        overflow-y: auto;
+    }
+
+    .player-item {
+        padding: 14px 18px;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, #ffe259 0%, #ffa751 100%);
+        border-radius: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 0 rgba(255, 167, 81, 0.4);
+        animation: slideIn 0.3s ease;
+        border: 2px solid #ffffff;
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .player-name {
+        font-weight: 400;
+        color: #ffffff;
+        font-size: 1.2rem;
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+
+    .remove-btn {
+        background: #ff6b81;
+        color: white;
+        border: 2px solid #ffffff;
+        padding: 8px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 400;
+        transition: all 0.2s;
+        box-shadow: 0 3px 0 rgba(255, 107, 129, 0.4);
+    }
+
+    .remove-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 0 rgba(255, 107, 129, 0.5);
+    }
+
+    .remove-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 0 rgba(255, 107, 129, 0.4);
+    }
+
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        background: #fff5e1;
+        border-radius: 14px;
+        border: 3px solid #ffa751;
+    }
+
+    .toggle-label {
+        font-weight: 400;
+        color: #3a7bd5;
+        margin: 0;
+        font-size: 1.05rem;
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 64px;
+        height: 34px;
+        background: #d4d4d4;
+        border-radius: 34px;
+        cursor: pointer;
+        transition: background 0.3s;
+        border: 3px solid #ffffff;
+    }
+
+    .toggle-switch.active {
+        background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+    }
+
+    .toggle-slider {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 24px;
+        height: 24px;
+        background: #ffffff;
+        border-radius: 50%;
+        transition: transform 0.3s;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .toggle-switch.active .toggle-slider {
+        transform: translateX(30px);
+    }
+
+    .reveal-box {
+        background: rgba(255, 255, 255, 0.95);
+        border: 5px solid #ffffff;
+        border-radius: 20px;
+        padding: 80px 40px;
+        margin: 40px 0;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 10px 40px rgba(255, 167, 81, 0.4);
+        transform: rotate(-1deg);
+    }
+
+    .reveal-box:hover {
+        transform: rotate(0deg) translateY(-5px) scale(1.02);
+        box-shadow: 0 15px 50px rgba(255, 107, 129, 0.5);
+    }
+
+    .reveal-box p {
+        font-size: 1.8rem;
+        color: #ff6b81;
+        font-family: 'Righteous', sans-serif;
+        text-shadow: 2px 2px 0 rgba(255, 167, 81, 0.3);
+    }
+
+    .word-display {
+        background: linear-gradient(135deg, #ffe259 0%, #ffa751 100%);
+        border: 5px solid #ffffff;
+        border-radius: 20px;
+        padding: 60px 32px;
+        margin: 40px 0;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(255, 226, 89, 0.5);
+        animation: expand 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        transform: rotate(1deg);
+    }
+
+    @keyframes expand {
+        from { transform: scale(0.8) rotate(0deg); opacity: 0; }
+        to { transform: scale(1) rotate(1deg); opacity: 1; }
+    }
+
+    .big-word {
+        font-size: 4rem;
+        font-weight: 900;
+        color: #ffffff;
+        font-family: 'Righteous', sans-serif;
+        word-break: break-word;
+        line-height: 1.1;
+        text-shadow: 4px 4px 0 rgba(255, 107, 129, 0.5);
+    }
+
+    .host-word {
+        background: rgba(255, 255, 255, 0.95);
+        border: 4px dashed #ff6b81;
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 20px;
+    }
+
+    .host-label {
+        font-size: 0.9rem;
+        color: #3a7bd5;
+        margin-bottom: 10px;
+        font-weight: 400;
+        letter-spacing: 0.05em;
+    }
+
+    .host-word-text {
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: #ff6b81;
+        font-family: 'Righteous', sans-serif;
+        text-shadow: 2px 2px 0 rgba(255, 167, 81, 0.2);
+    }
+
+    .info-text {
+        color: #ffffff;
+        font-size: 1.1rem;
+        margin-top: 16px;
+        text-align: center;
+        line-height: 1.6;
+        font-weight: 400;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    @media (max-width: 600px) {
+        .sun {
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+        }
+
+        .container {
+            padding: 32px 20px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+        }
+
+        .big-word {
+            font-size: 2.8rem;
+        }
+
+        .reveal-box {
+            padding: 60px 28px;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="sun"></div>
+<div class="float-emoji emoji-1">🏄</div>
+<div class="float-emoji emoji-2">🌊</div>
+<div class="float-emoji emoji-3">🏖️</div>
+<div class="container">
+
+<!-- Setup Screen -->
+<div id="setup-screen">
+<h1>HEADS UP!</h1>
+<p class="subtitle">Hold the word on your forehead!</p>
+
+<div class="setup-section">
+<label>Add Players</label>
+<div class="player-input-container">
+<input type="text" id="new-player-name" placeholder="Enter player name..." maxlength="20">
+<button class="btn btn-small" onclick="addPlayer()">Add</button>
+</div>
+</div>
+
+<div class="players-list" id="players-list-setup">
+<p class="info-text" style="color: #999; font-style: italic;">No players added yet</p>
+</div>
+
+<div class="setup-section">
+<label for="category">Category</label>
+<select id="category">
+<option value="movies">🎬 Movies</option>
+<option value="food">🍕 Food</option>
+<option value="sports">⚽ Sports</option>
+<option value="brands">🏷️ Brands</option>
+<option value="celebrities">⭐ Celebrities</option>
+</select>
+</div>
+
+<div class="setup-section">
+<div class="toggle-container">
+<span class="toggle-label">Host Mode (See All Words)</span>
+<div class="toggle-switch active" id="host-toggle">
+<div class="toggle-slider"></div>
+</div>
+</div>
+</div>
+
+<button class="btn" onclick="startGame()">Start Game</button>
+</div>
+
+<!-- Player Word Screen -->
+<div id="player-screen" class="hidden">
+<h2 id="current-player-name"></h2>
+
+<div id="reveal-container">
+<div class="reveal-box" onclick="revealWord()">
+<p>👆 Tap to reveal your word</p>
+</div>
+</div>
+
+<div id="word-container" class="hidden">
+<div class="word-display">
+<div class="big-word" id="player-word"></div>
+</div>
+
+<div id="host-word-container" class="hidden">
+<div class="host-word">
+<div class="host-label">Your Word</div>
+<div class="host-word-text" id="host-word"></div>
+</div>
+</div>
+</div>
+
+<button class="btn btn-secondary" onclick="nextPlayer()">Next Player</button>
+<button class="btn btn-secondary" onclick="resetGame()">New Game</button>
+</div>
+
+<!-- Round Complete Screen -->
+<div id="complete-screen" class="hidden">
+<h1>🎉 Round Complete!</h1>
+<div style="text-align: center; margin: 40px 0;">
+<p style="color: #ffffff; font-size: 1.3rem; margin-bottom: 30px; font-weight: 400; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+Everyone has had their turn!
+</p>
+<div style="background: rgba(255, 255, 255, 0.95); padding: 32px; border-radius: 20px; margin: 20px 0; border: 4px solid #ffffff; transform: rotate(0.5deg);">
+<p style="color: #3a7bd5; font-size: 1.2rem; font-weight: 400;">
+Ready for another round?
+</p>
+</div>
+</div>
+<button class="btn" onclick="startNewRound()">Play Another Round</button>
+<button class="btn btn-secondary" onclick="resetGame()">Back to Setup</button>
+</div>
+</div>
+
+<script>
+    const wordDatabase = {
+        movies: ['Avatar', 'Frozen', 'Shrek', 'Spiderman', 'Harry Potter', 'Star Wars', 'Jurassic Park', 'The Lion King', 'Iron Man', 'Inception', 'Avengers', 'Black Panther', 'Deadpool', 'Moana', 'Tangled', 'Coco', 'Up', 'Ratatouille', 'Toy Story', 'Finding Nemo', 'Hunger Games', 'Twilight', 'Mean Girls', 'The Dark Knight', 'Interstellar', 'Joker', 'Barbie', 'Oppenheimer', 'Dune', 'Encanto', 'Turning Red', 'Soul', 'Luca', 'Spider-Verse', 'Guardians of the Galaxy', 'Doctor Strange', 'Thor', 'Captain America', 'Wonder Woman', 'Aquaman', 'The Flash', 'Venom', 'Fast and Furious', 'Transformers', 'John Wick', 'Get Out', 'A Quiet Place', 'IT', 'The Conjuring', 'Parasite', 'Knives Out', 'La La Land', 'The Greatest Showman', 'Pitch Perfect', 'High School Musical', 'The Kissing Booth', 'To All The Boys', 'Everything Everywhere All at Once', 'Top Gun Maverick'],
+        food: ['Pizza', 'Burger', 'Sushi', 'Pasta', 'Tacos', 'Hot Dog', 'Ice Cream', 'Donut', 'Cookie', 'Cake', 'Ramen', 'Burrito', 'French Fries', 'Nachos', 'Quesadilla', 'Pho', 'Pad Thai', 'Fried Rice', 'Dumplings', 'Boba', 'Smoothie', 'Milkshake', 'Poke Bowl', 'Acai Bowl', 'Avocado Toast', 'Bagel', 'Croissant', 'Cinnamon Roll', 'Brownie', 'Cupcake', 'Cheesecake', 'Macarons', 'Churros', 'Popcorn', 'Pretzels', 'Chips', 'Takis', 'Hot Cheetos', 'Oreos', 'Skittles', 'M&Ms', 'Gummy Bears', 'Sour Patch Kids', 'Kit Kat', 'Reese\'s', 'Snickers', 'Nutella', 'Cereal', 'Chicken Wings', 'Mozzarella Sticks'],
+        sports: ['Soccer', 'Basketball', 'Football', 'Baseball', 'Tennis', 'Volleyball', 'Swimming', 'Golf', 'Gymnastics', 'Wrestling', 'Boxing', 'Hockey', 'Skateboarding', 'Surfing', 'Skiing', 'Snowboarding', 'Cheerleading', 'Dance', 'Track', 'Lacrosse', 'Rugby', 'Cricket', 'Badminton', 'Pickleball', 'Dodgeball', 'Kickball', 'Ultimate Frisbee', 'Rock Climbing', 'Bowling', 'Ice Skating', 'Roller Skating', 'Archery', 'Fencing', 'Karate', 'Taekwondo', 'MMA', 'CrossFit', 'Yoga', 'Running', 'Cycling', 'BMX'],
+        brands: ['Nike', 'Apple', 'Adidas', 'Starbucks', 'McDonald', 'Coca-Cola', 'Pepsi', 'Tesla', 'Amazon', 'Netflix', 'Spotify', 'YouTube', 'Instagram', 'TikTok', 'Snapchat', 'Discord', 'Twitter', 'Facebook', 'PlayStation', 'Xbox', 'Nintendo', 'Roblox', 'Minecraft', 'Fortnite', 'Supreme', 'Vans', 'Converse', 'Jordan', 'Crocs', 'Lululemon', 'Gymshark', 'Champion', 'North Face', 'Crumbl', 'Chipotle', 'Chick-fil-A', 'In-N-Out', 'Taco Bell', 'Dunkin', 'Panda Express', 'Red Bull', 'Monster', 'Stanley', 'Hydro Flask', 'Lego'],
+        celebrities: ['Taylor Swift', 'Beyonce', 'Ariana Grande', 'Billie Eilish', 'Olivia Rodrigo', 'Dua Lipa', 'The Weeknd', 'Drake', 'Post Malone', 'Travis Scott', 'Bad Bunny', 'Harry Styles', 'Sabrina Carpenter', 'Doja Cat', 'SZA', 'Tom Holland', 'Zendaya', 'Timothée Chalamet', 'Millie Bobby Brown', 'Jenna Ortega', 'Pedro Pascal', 'Sydney Sweeney', 'Jacob Elordi', 'Chris Hemsworth', 'Ryan Reynolds', 'Dwayne Johnson', 'MrBeast', 'Emma Chamberlain', 'Charli D\'Amelio', 'Addison Rae', 'LeBron James', 'Stephen Curry', 'Lionel Messi', 'Cristiano Ronaldo', 'Serena Williams', 'Tom Brady', 'Patrick Mahomes', 'Simone Biles', 'Kim Kardashian', 'Kylie Jenner', 'Selena Gomez', 'Justin Bieber', 'Rihanna', 'Lady Gaga', 'Elon Musk']
+    };
+
+    let gameState = {
+        players: [],
+        category: 'movies',
+        currentPlayerIndex: 0,
+        shuffledWords: [],
+        wordIndex: 0,
+        isHost: false,
+        hostWord: '',
+        currentWord: ''
+    };
+
+    // Shuffle function
+    function shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+
+    // Toggle host mode
+    document.getElementById('host-toggle').addEventListener('click', function() {
+        this.classList.toggle('active');
+        gameState.isHost = this.classList.contains('active');
+    });
+
+    // Add player with Enter key
+    document.getElementById('new-player-name').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addPlayer();
+        }
+    });
+
+    function addPlayer() {
+        const input = document.getElementById('new-player-name');
+        const name = input.value.trim();
+
+        if (!name) {
+            alert('Please enter a name!');
+            return;
+        }
+
+        if (gameState.players.includes(name)) {
+            alert('This name is already added!');
+            return;
+        }
+
+        gameState.players.push(name);
+        input.value = '';
+        input.focus(); // Keep focus on input for easy adding
+        updatePlayersList();
+    }
+
+    function removePlayer(index) {
+        gameState.players.splice(index, 1);
+        updatePlayersList();
+    }
+
+    function updatePlayersList() {
+        const list = document.getElementById('players-list-setup');
+        if (gameState.players.length === 0) {
+            list.innerHTML = '<p class="info-text" style="color: #999; font-style: italic;">No players added yet</p>';
+            return;
+        }
+
+        list.innerHTML = gameState.players.map((player, index) => `
+            <div class="player-item">
+                <span class="player-name">${player}</span>
+                <button class="remove-btn" onclick="removePlayer(${index})">Remove</button>
+            </div>
+        `).join('');
+    }
+
+    function startGame() {
+        if (gameState.players.length === 0) {
+            alert('Add at least one player!');
+            return;
+        }
+
+        gameState.category = document.getElementById('category').value;
+        
+        // Shuffle the words for this game
+        gameState.shuffledWords = shuffleArray(wordDatabase[gameState.category]);
+        gameState.wordIndex = 0;
+
+        // If host mode, move first player to end
+        if (gameState.isHost && gameState.players.length > 1) {
+            const hostName = gameState.players.shift();
+            gameState.players.push(hostName);
+            gameState.hostWord = getNextWord();
+        }
+
+        gameState.currentPlayerIndex = 0;
+        showNextPlayer();
+    }
+
+    function getNextWord() {
+        if (gameState.wordIndex >= gameState.shuffledWords.length) {
+            // Re-shuffle if we run out
+            gameState.shuffledWords = shuffleArray(wordDatabase[gameState.category]);
+            gameState.wordIndex = 0;
+        }
+        const word = gameState.shuffledWords[gameState.wordIndex];
+        gameState.wordIndex++;
+        return word;
+    }
+
+    function showNextPlayer() {
+        const playerName = gameState.players[gameState.currentPlayerIndex];
+        const isHostPlayer = gameState.isHost && gameState.currentPlayerIndex === gameState.players.length - 1;
+
+        document.getElementById('current-player-name').textContent = playerName;
+
+        // Get and store the word but don't show it yet
+        if (isHostPlayer) {
+            gameState.currentWord = '';
+        } else {
+            gameState.currentWord = getNextWord();
+        }
+
+        // Show reveal box, hide word container
+        document.getElementById('reveal-container').classList.remove('hidden');
+        document.getElementById('word-container').classList.add('hidden');
+
+        showScreen('player-screen');
+    }
+
+    function revealWord() {
+        const isHostPlayer = gameState.isHost && gameState.currentPlayerIndex === gameState.players.length - 1;
+
+        // Hide reveal box, show word container
+        document.getElementById('reveal-container').classList.add('hidden');
+        document.getElementById('word-container').classList.remove('hidden');
+
+        if (isHostPlayer) {
+            // Show host's word
+            document.getElementById('player-word').textContent = '---';
+            document.getElementById('host-word').textContent = gameState.hostWord;
+            document.getElementById('host-word-container').classList.remove('hidden');
+        } else {
+            // Show regular word
+            document.getElementById('player-word').textContent = gameState.currentWord;
+            document.getElementById('host-word-container').classList.add('hidden');
+        }
+    }
+
+    function nextPlayer() {
+        gameState.currentPlayerIndex++;
+
+        if (gameState.currentPlayerIndex >= gameState.players.length) {
+            // Everyone has gone - show completion screen
+            showScreen('complete-screen');
+        } else {
+            showNextPlayer();
+        }
+    }
+
+    function startNewRound() {
+        gameState.currentPlayerIndex = 0;
+        showNextPlayer();
+    }
+
+    function resetGame() {
+        gameState.currentPlayerIndex = 0;
+        gameState.wordIndex = 0;
+        gameState.shuffledWords = [];
+        
+        // Restore original player order if host mode was used
+        if (gameState.isHost && gameState.players.length > 1) {
+            const hostName = gameState.players.pop();
+            gameState.players.unshift(hostName);
+        }
+        
+        showScreen('setup-screen');
+    }
+
+    function showScreen(screenId) {
+        const screens = ['setup-screen', 'player-screen', 'complete-screen'];
+        screens.forEach(screen => {
+            document.getElementById(screen).classList.add('hidden');
+        });
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+</script>
+</body>
+</html>

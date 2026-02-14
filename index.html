@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Party Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, sans-serif;
+        background: #0a0a0a;
+        color: #ffffff;
+        min-height: 100vh;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    .container {
+        max-width: 100%;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Header */
+    header {
+        padding: 24px 32px;
+        border-bottom: 1px solid #1a1a1a;
+        background: rgba(10, 10, 10, 0.8);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    h1 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
+    .status {
+        font-size: 0.75rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Main Content */
+    main {
+        flex: 1;
+        padding: 48px 32px;
+    }
+
+    .games-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .section-label {
+        font-size: 0.6875rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+
+    .games-grid {
+        display: grid;
+        gap: 1px;
+        background: #1a1a1a;
+        border: 1px solid #1a1a1a;
+    }
+
+    .game-item {
+        background: #0a0a0a;
+        padding: 32px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .game-item:hover {
+        background: #111111;
+    }
+
+    .game-item:active {
+        background: #0a0a0a;
+    }
+
+    .game-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+        border: 1px solid #1a1a1a;
+        background: #0f0f0f;
+    }
+
+    .game-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .game-title {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 4px;
+        letter-spacing: -0.01em;
+    }
+
+    .game-meta {
+        font-size: 0.8125rem;
+        color: #666;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .game-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .game-meta span::before {
+        content: '';
+        width: 3px;
+        height: 3px;
+        background: #333;
+        border-radius: 50%;
+    }
+
+    .game-meta span:first-child::before {
+        display: none;
+    }
+
+    .game-arrow {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+        transition: transform 0.15s ease, color 0.15s ease;
+    }
+
+    .game-item:hover .game-arrow {
+        transform: translateX(4px);
+        color: #666;
+    }
+
+    /* Footer */
+    footer {
+        padding: 32px;
+        border-top: 1px solid #1a1a1a;
+        text-align: center;
+    }
+
+    .footer-text {
+        font-size: 0.75rem;
+        color: #333;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        header {
+            padding: 20px 20px;
+        }
+
+        main {
+            padding: 32px 20px;
+        }
+
+        .game-item {
+            padding: 24px 20px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .game-arrow {
+            align-self: flex-end;
+        }
+
+        footer {
+            padding: 24px 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        h1 {
+            font-size: 1rem;
+        }
+
+        .status {
+            font-size: 0.6875rem;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="header-content">
+            <h1>Party Games</h1>
+            <div class="status">3 Available</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="games-container">
+            <div class="section-label">Available Games</div>
+            
+            <div class="games-grid">
+                <div class="game-item" onclick="loadGame('imposter')">
+                    <div class="game-icon">🎭</div>
+                    <div class="game-info">
+                        <div class="game-title">The Imposter</div>
+                        <div class="game-meta">
+                            <span>3+ Players</span>
+                            <span>10-15 min</span>
+                            <span>Social Deduction</span>
+                        </div>
+                    </div>
+                    <div class="game-arrow">→</div>
+                </div>
+
+                <div class="game-item" onclick="loadGame('headsup')">
+                    <div class="game-icon">🤔</div>
+                    <div class="game-info">
+                        <div class="game-title">Heads Up!</div>
+                        <div class="game-meta">
+                            <span>1+ Players</span>
+                            <span>5-10 min</span>
+                            <span>Guessing</span>
+                        </div>
+                    </div>
+                    <div class="game-arrow">→</div>
+                </div>
+
+                <div class="game-item" onclick="loadGame('oddoneout')">
+                    <div class="game-icon">🎯</div>
+                    <div class="game-info">
+                        <div class="game-title">Odd One Out</div>
+                        <div class="game-meta">
+                            <span>3+ Players</span>
+                            <span>10-15 min</span>
+                            <span>Party</span>
+                        </div>
+                    </div>
+                    <div class="game-arrow">→</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-text">v1.0.0</div>
+    </footer>
+</div>
+
+<script>
+function loadGame(game) {
+    const gameFiles = {
+        'imposter': 'imposter-final.html',
+        'headsup': 'heads-up-final.html',
+        'oddoneout': 'odd-final.html'
+    };
+    
+    if (gameFiles[game]) {
+        window.location.href = gameFiles[game];
+    }
+}
+</script>
+</body>
+</html>
