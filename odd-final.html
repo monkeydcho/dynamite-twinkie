@@ -802,11 +802,11 @@
 
         <div class="setup-section">
             <div class="mode-toggle">
-                <button class="mode-btn active" onclick="selectMode('local')">
+                <button class="mode-btn active" onclick="selectMode('local', event)">
                     Single Device<br>
                     <small style="font-size: 0.85rem; opacity: 0.8;">Pass & play</small>
                 </button>
-                <button class="mode-btn" onclick="selectMode('multiplayer')">
+                <button class="mode-btn" onclick="selectMode('multiplayer', event)">
                     Multiplayer<br>
                     <small style="font-size: 0.85rem; opacity: 0.8;">Each person's phone</small>
                 </button>
@@ -996,8 +996,14 @@
 
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    try {
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        console.log('Firebase initialized successfully');
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
+        const database = null;
+    }
 
     const questionDatabase = {
         love: {
@@ -1177,16 +1183,21 @@
     };
 
     // Mode Selection
-    function selectMode(mode) {
+    function selectMode(mode, event) {
+        console.log('selectMode called with:', mode);
         document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
         event.target.closest('.mode-btn').classList.add('active');
         gameState.mode = mode;
+        console.log('gameState.mode set to:', gameState.mode);
     }
 
     function confirmMode() {
+        console.log('confirmMode called, mode is:', gameState.mode);
         if (gameState.mode === 'multiplayer') {
+            console.log('Switching to join-screen');
             showScreen('join-screen');
         } else {
+            console.log('Switching to setup-screen');
             showScreen('setup-screen');
         }
     }
@@ -1391,7 +1402,7 @@
             return;
         }
 
-        i/f (gameState.players.includes(name)) {
+        if (gameState.players.includes(name)) {
             alert('This name is already added!');
             return;
         }
@@ -1504,6 +1515,7 @@
     }
 
     function showScreen(screenId) {
+        console.log('showScreen called with:', screenId);
         const screens = [
             'mode-screen', 
             'join-screen', 
@@ -1517,10 +1529,19 @@
         ];
         screens.forEach(screen => {
             const el = document.getElementById(screen);
-            if (el) el.classList.add('hidden');
+            if (el) {
+                el.classList.add('hidden');
+            } else {
+                console.warn('Screen not found:', screen);
+            }
         });
         const targetScreen = document.getElementById(screenId);
-        if (targetScreen) targetScreen.classList.remove('hidden');
+        if (targetScreen) {
+            targetScreen.classList.remove('hidden');
+            console.log('Showing screen:', screenId);
+        } else {
+            console.error('Target screen not found:', screenId);
+        }
     }
 </script>
 </body>
