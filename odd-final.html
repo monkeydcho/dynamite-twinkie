@@ -867,6 +867,10 @@
             <div id="lobby-players-list">
                 <p class="info-text">Waiting for players...</p>
             </div>
+            <div style="margin-top: 16px; display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="rename-input" placeholder="Change your name..." style="margin-bottom:0; flex:1;">
+                <button class="btn btn-small" style="margin-top:0;" onclick="changeName()">Update</button>
+            </div>
         </div>
 
         <div class="setup-section" id="host-controls" style="display:none">
@@ -879,7 +883,7 @@
                 <option value="opinions">Hot Takes & Opinions 🔥</option>
                 <option value="personal">Personal Growth 🌱</option>
             </select>
-            <button class="btn" onclick="startMultiplayerGame()">Start Game</button>
+            <button class="btn" id="start-game-btn" onclick="startMultiplayerGame()">Start Game</button>
         </div>
     </div>
 
@@ -940,27 +944,32 @@
             <p class="question-text" id="multiplayer-question-text"></p>
         </div>
 
+        <div class="setup-section">
+            <label for="player-answer">Your Answer</label>
+            <input type="text" id="player-answer" placeholder="Type your answer here...">
+        </div>
+
         <div id="mp-host-ready" class="hidden">
-            <p class="info-text" style="margin-bottom: 16px;">When everyone has read their question, start the discussion.</p>
-            <button class="btn" onclick="moveToDiscussion()">Everyone's Ready — Start Discussion</button>
+            <p class="info-text" style="margin-bottom: 16px;">When everyone has typed their answer, show them to the group.</p>
+            <button class="btn" onclick="moveToDiscussion()">Show Everyone's Answers</button>
         </div>
 
         <div id="mp-guest-ready">
-            <p class="info-text">Waiting for the host to start the discussion...</p>
+            <p class="info-text">Waiting for the host to show everyone's answers...</p>
         </div>
     </div>
 
-    <!-- Discussion Screen -->
-    <div id="discussion-screen" class="hidden">
-        <h2>Time to Discuss</h2>
-
-        <div class="discussion-info">
-            <p><strong>Share your answers</strong><br>Everyone takes turns sharing their answer to their question.</p>
-            <p><strong>Find the odd one</strong><br>Try to figure out who got a different question!</p>
-            <p><strong>Vote together</strong><br>When you're ready, reveal the questions and see who the odd one really was.</p>
+    <!-- Answers Board Screen (shown after host proceeds) -->
+    <div id="answers-screen" class="hidden">
+        <h2>Everyone's Answers</h2>
+        <div id="answers-list"></div>
+        <div id="host-answers-controls" class="hidden">
+            <button class="btn btn-secondary" onclick="toggleMajorityQuestion()" id="toggle-question-btn">Show the Question</button>
+            <button class="btn" onclick="showQuestionsReveal()" style="margin-top: 12px;">Reveal the Questions</button>
         </div>
-
-        <button class="btn" onclick="showQuestionsReveal()">Reveal the Questions</button>
+        <div id="guest-answers-waiting">
+            <p class="info-text" style="margin-top: 16px;">Waiting for host to continue...</p>
+        </div>
     </div>
     <div id="questions-reveal-screen" class="hidden">
         <h2>The Majority Got...</h2>
@@ -988,14 +997,14 @@
 
         <div class="button-group">
             <button class="btn" onclick="playAgain()">Play Again</button>
-            <button class="btn btn-secondary" onclick="resetGame()">New Game</button>
+            <button class="btn btn-secondary" onclick="resetGame()">Leave Room</button>
         </div>
     </div>
 </div>
 
 <script>
     // Firebase Configuration
-    const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyBNLimf247SRwWbn3gCFOz4agt9AsoogYI",
   authDomain: "dynamitetwinkie-7b197.firebaseapp.com",
   databaseURL: "https://dynamitetwinkie-7b197-default-rtdb.firebaseio.com",
@@ -1280,43 +1289,16 @@
         const roomRef = database.ref('rooms/' + gameState.roomCode);
         roomRef.set({
             host: hostName,
-            players: [hostName],
+            players: { [sanitizeKey(hostName)]: hostName },
             category: 'love',
             gameStarted: false,
             phase: 'lobby',
             createdAt: Date.now()
         }).then(() => {
             gameState.roomRef = roomRef;
+            setupPresence(roomRef, hostName, true);
+            attachRoomListener(roomRef);
 
-            const onRoomUpdate = (snapshot) => {
-                const roomData = snapshot.val();
-                if (!roomData) return;
-
-                const phase = roomData.phase;
-
-                if (phase === 'lobby') {
-                    updateLobby(roomData);
-                    return; // stop here while in lobby
-                }
-
-                if (phase === 'question' && gameState.phase !== 'question') {
-                    gameState.phase = 'question';
-                    showMultiplayerQuestion(roomData);
-                    return;
-                }
-
-                if (phase === 'discussion' && gameState.phase !== 'discussion') {
-                    gameState.phase = 'discussion';
-                    // Detach listener — we don't need it anymore
-                    roomRef.off('value', onRoomUpdate);
-                    gameState.normalQuestion = roomData.normalQuestion;
-                    gameState.oddQuestion = roomData.oddQuestion;
-                    gameState.oddOneName = roomData.oddOneName;
-                    showScreen('discussion-screen');
-                }
-            };
-
-            roomRef.on('value', onRoomUpdate);
             document.getElementById('display-room-code').textContent = gameState.roomCode;
             document.getElementById('host-controls').style.display = 'block';
             showScreen('lobby-screen');
@@ -1362,46 +1344,21 @@
                 return;
             }
 
-            // Add player to room
-            const players = roomData.players || [];
-            if (players.includes(playerName)) {
-                alert('This name is already in use!');
+            // Check name not already taken
+            const players = roomData.players || {};
+            const takenNames = Object.values(players).map(n => n.toLowerCase());
+            if (takenNames.includes(playerName.toLowerCase())) {
+                alert('This name is already in use! Please choose a different name.');
                 return;
             }
 
-            players.push(playerName);
-            roomRef.update({ players: players }).then(() => {
+            // Add player to room using key-value object
+            const playerKey = sanitizeKey(playerName);
+            roomRef.child('players/' + playerKey).set(playerName).then(() => {
                 gameState.roomRef = roomRef;
+                setupPresence(roomRef, playerName, false);
+                attachRoomListener(roomRef);
 
-                const onRoomUpdate = (snapshot) => {
-                    const roomData = snapshot.val();
-                    if (!roomData) return;
-
-                    const phase = roomData.phase;
-
-                    if (phase === 'lobby') {
-                        updateLobby(roomData);
-                        return;
-                    }
-
-                    if (phase === 'question' && gameState.phase !== 'question') {
-                        gameState.phase = 'question';
-                        showMultiplayerQuestion(roomData);
-                        return;
-                    }
-
-                    if (phase === 'discussion' && gameState.phase !== 'discussion') {
-                        gameState.phase = 'discussion';
-                        // Detach listener — we don't need it anymore
-                        roomRef.off('value', onRoomUpdate);
-                        gameState.normalQuestion = roomData.normalQuestion;
-                        gameState.oddQuestion = roomData.oddQuestion;
-                        gameState.oddOneName = roomData.oddOneName;
-                        showScreen('discussion-screen');
-                    }
-                };
-
-                roomRef.on('value', onRoomUpdate);
                 document.getElementById('display-room-code').textContent = roomCode;
                 showScreen('lobby-screen');
             });
@@ -1413,49 +1370,37 @@
     // Update Lobby
     function updateLobby(roomData) {
         const playersList = document.getElementById('lobby-players-list');
-        if (!roomData.players || roomData.players.length === 0) {
+        const players = roomData.players || {};
+        const playerNames = Object.values(players);
+
+        if (playerNames.length === 0) {
             playersList.innerHTML = '<p class="info-text">Waiting for players...</p>';
             return;
         }
 
-        playersList.innerHTML = roomData.players.map(player => `
+        playersList.innerHTML = playerNames.map(name => `
             <div class="player-item">
-                <span class="player-name">${player}${player === roomData.host ? ' (Host)' : ''}</span>
+                <span class="player-name">${name}${name === roomData.host ? ' (Host)' : ''}</span>
             </div>
         `).join('');
 
-        // Show host controls only to the host
+        // Show host controls only to host
         const hostControls = document.getElementById('host-controls');
         if (gameState.isHost) {
             hostControls.style.display = 'block';
-        } else {
-            hostControls.style.display = 'none';
-            // Show waiting message for non-hosts
-            if (!document.getElementById('waiting-msg')) {
-                const msg = document.createElement('p');
-                msg.id = 'waiting-msg';
-                msg.className = 'info-text';
-                msg.textContent = 'Waiting for the host to start the game...';
-                msg.style.marginTop = '16px';
-                playersList.parentElement.appendChild(msg);
-            }
         }
     }
 
     // Start Multiplayer Game
     function startMultiplayerGame() {
-        if (!gameState.isHost) {
-            alert('Only the host can start the game!');
-            return;
-        }
+        if (!gameState.isHost) return;
 
         const roomRef = database.ref('rooms/' + gameState.roomCode);
-        
         roomRef.once('value').then((snapshot) => {
             const roomData = snapshot.val();
-            const players = roomData.players || [];
+            const playerNames = Object.values(roomData.players || {});
 
-            if (players.length < 3) {
+            if (playerNames.length < 3) {
                 alert('You need at least 3 players!');
                 return;
             }
@@ -1464,13 +1409,12 @@
             const questions = questionDatabase[category];
             const normalIndex = Math.floor(Math.random() * questions.normal.length);
             const oddIndex = Math.floor(Math.random() * questions.odd.length);
-            const oddOneIndex = Math.floor(Math.random() * players.length);
+            const oddOneIndex = Math.floor(Math.random() * playerNames.length);
 
-            // Disable the button to prevent double-clicking
-            document.querySelector('#host-controls .btn').disabled = true;
-            document.querySelector('#host-controls .btn').textContent = 'Starting...';
+            const btn = document.getElementById('start-game-btn');
+            btn.disabled = true;
+            btn.textContent = 'Starting...';
 
-            // Update room with game data - all listeners will pick this up
             roomRef.update({
                 gameStarted: true,
                 phase: 'question',
@@ -1478,7 +1422,8 @@
                 normalQuestion: questions.normal[normalIndex],
                 oddQuestion: questions.odd[oddIndex],
                 oddOneIndex: oddOneIndex,
-                oddOneName: players[oddOneIndex]
+                oddOneName: playerNames[oddOneIndex],
+                answers: null // clear any previous answers
             });
         });
     }
@@ -1502,10 +1447,209 @@
         showScreen('multiplayer-question-screen');
     }
 
-    // Host moves everyone to discussion
+    // Show Multiplayer Question
+    function showMultiplayerQuestion(roomData) {
+        const playerNames = Object.values(roomData.players || {});
+        const playerIndex = playerNames.indexOf(gameState.playerName);
+        const isOddOne = playerIndex === roomData.oddOneIndex;
+        const question = isOddOne ? roomData.oddQuestion : roomData.normalQuestion;
+
+        document.getElementById('multiplayer-question-text').textContent = question;
+        document.getElementById('player-answer').value = '';
+
+        if (gameState.isHost) {
+            document.getElementById('mp-host-ready').classList.remove('hidden');
+            document.getElementById('mp-guest-ready').classList.add('hidden');
+        } else {
+            document.getElementById('mp-host-ready').classList.add('hidden');
+            document.getElementById('mp-guest-ready').classList.remove('hidden');
+        }
+
+        showScreen('multiplayer-question-screen');
+    }
+
+    // Host moves everyone to answers phase — saves host's answer first
     function moveToDiscussion() {
+        const answer = document.getElementById('player-answer').value.trim();
         const roomRef = database.ref('rooms/' + gameState.roomCode);
-        roomRef.update({ phase: 'discussion' });
+        const answerKey = 'answers/' + sanitizeKey(gameState.playerName);
+        roomRef.child(answerKey).set(answer || '(no answer)').then(() => {
+            roomRef.update({ phase: 'answers' });
+        });
+    }
+
+    // Render the answers board
+    function showAnswersScreen(roomData) {
+        const playerNames = Object.values(roomData.players || {});
+        const answers = roomData.answers || {};
+
+        const list = document.getElementById('answers-list');
+        list.innerHTML = playerNames.map(name => {
+            const key = sanitizeKey(name);
+            const answer = answers[key] || '...';
+            return `
+                <div class="player-item" style="flex-direction:column; align-items:flex-start; gap:6px;">
+                    <span class="player-name">${name}</span>
+                    <span style="color:#fef3c7; font-size:1.1rem; font-style:italic;">${answer}</span>
+                </div>
+            `;
+        }).join('');
+
+        showingMajorityQuestion = false;
+
+        if (gameState.isHost) {
+            document.getElementById('host-answers-controls').classList.remove('hidden');
+            document.getElementById('guest-answers-waiting').classList.add('hidden');
+        } else {
+            document.getElementById('host-answers-controls').classList.add('hidden');
+            document.getElementById('guest-answers-waiting').classList.remove('hidden');
+        }
+
+        showScreen('answers-screen');
+    }
+
+    // Host toggles between answers and majority question
+    let showingMajorityQuestion = false;
+    function toggleMajorityQuestion() {
+        const btn = document.getElementById('toggle-question-btn');
+        const list = document.getElementById('answers-list');
+
+        if (!showingMajorityQuestion) {
+            list.innerHTML = `
+                <div class="reveal-box" style="margin-bottom:20px;">
+                    <h3 style="margin-bottom:12px;">Most players got:</h3>
+                    <p class="question-preview">"${gameState.normalQuestion}"</p>
+                </div>
+            `;
+            btn.textContent = 'Show Answers';
+            showingMajorityQuestion = true;
+        } else {
+            const roomRef = database.ref('rooms/' + gameState.roomCode);
+            roomRef.once('value').then(snap => showAnswersScreen(snap.val()));
+            btn.textContent = 'Show the Question';
+            showingMajorityQuestion = false;
+        }
+    }
+
+    // Sanitize name to safe Firebase key
+    function sanitizeKey(name) {
+        return name.replace(/[.#$[\]/]/g, '_').toLowerCase();
+    }
+
+    // Presence — remove player or room on disconnect/navigation
+    function setupPresence(roomRef, playerName, isHost) {
+        const playerKey = sanitizeKey(playerName);
+
+        if (isHost) {
+            roomRef.onDisconnect().remove();
+        } else {
+            roomRef.child('players/' + playerKey).onDisconnect().remove();
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (isHost) roomRef.remove();
+            else roomRef.child('players/' + playerKey).remove();
+        });
+    }
+
+    // Change name in lobby
+    function changeName() {
+        const input = document.getElementById('rename-input');
+        const newName = input.value.trim();
+        if (!newName) { alert('Please enter a name!'); return; }
+        if (newName === gameState.playerName) { input.value = ''; return; }
+
+        const roomRef = database.ref('rooms/' + gameState.roomCode);
+        roomRef.once('value').then(snapshot => {
+            const roomData = snapshot.val();
+            const taken = Object.values(roomData.players || {}).map(n => n.toLowerCase());
+            if (taken.includes(newName.toLowerCase())) {
+                alert('That name is already taken!');
+                return;
+            }
+
+            const oldKey = sanitizeKey(gameState.playerName);
+            const newKey = sanitizeKey(newName);
+
+            roomRef.child('players/' + oldKey).remove();
+            roomRef.child('players/' + newKey).set(newName);
+
+            if (gameState.isHost) {
+                roomRef.update({ host: newName });
+                roomRef.onDisconnect().remove(); // re-register same
+            } else {
+                roomRef.child('players/' + oldKey).onDisconnect().cancel();
+                roomRef.child('players/' + newKey).onDisconnect().remove();
+            }
+
+            gameState.playerName = newName;
+            input.value = '';
+        });
+    }
+
+    // Shared Firebase listener for both host and guest
+    function attachRoomListener(roomRef) {
+        roomRef.on('value', (snapshot) => {
+            const roomData = snapshot.val();
+
+            if (!roomData) {
+                if (!gameState.isHost) {
+                    alert('The host has left. The room is closed.');
+                    hardReset();
+                }
+                return;
+            }
+
+            const phase = roomData.phase;
+
+            if (phase === 'lobby') {
+                updateLobby(roomData);
+                return;
+            }
+
+            if (phase === 'question' && gameState.phase !== 'question') {
+                gameState.phase = 'question';
+                gameState.normalQuestion = roomData.normalQuestion;
+                gameState.oddQuestion = roomData.oddQuestion;
+                gameState.oddOneName = roomData.oddOneName;
+                gameState.oddOneIndex = roomData.oddOneIndex;
+                const btn = document.getElementById('start-game-btn');
+                if (btn) { btn.disabled = false; btn.textContent = 'Start Game'; }
+                showMultiplayerQuestion(roomData);
+                return;
+            }
+
+            if (phase === 'answers' && gameState.phase !== 'answers') {
+                gameState.phase = 'answers';
+                // Guests: save their answer before the screen switches
+                if (!gameState.isHost) {
+                    const answer = document.getElementById('player-answer').value.trim();
+                    roomRef.child('answers/' + sanitizeKey(gameState.playerName)).set(answer || '(no answer)');
+                }
+                // Small delay so guest answer saves before we render
+                setTimeout(() => {
+                    roomRef.once('value').then(snap => showAnswersScreen(snap.val()));
+                }, 400);
+                return;
+            }
+
+            if (phase === 'reveal' && gameState.phase !== 'reveal') {
+                gameState.phase = 'reveal';
+                showQuestionsReveal();
+                return;
+            }
+        });
+    }
+
+    // Full reset — go back to mode screen
+    function hardReset() {
+        gameState = {
+            mode: 'local', players: [], category: 'love',
+            currentPlayerIndex: 0, oddOneIndex: -1,
+            normalQuestion: '', oddQuestion: '', phase: 'mode-selection',
+            roomCode: null, isHost: false, playerName: ''
+        };
+        showScreen('mode-screen');
     }
 
     // LOCAL GAME FUNCTIONS (same as original)
@@ -1520,6 +1664,10 @@
 
     document.getElementById('join-code').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') joinRoom();
+    });
+
+    document.getElementById('rename-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') changeName();
     });
 
     function addPlayer() {
@@ -1618,6 +1766,10 @@
     }
 
     function showQuestionsReveal() {
+        if (gameState.mode === 'multiplayer') {
+            // Host pushes reveal phase to all
+            database.ref('rooms/' + gameState.roomCode).update({ phase: 'reveal' });
+        }
         document.getElementById('normal-question-reveal').textContent = `"${gameState.normalQuestion}"`;
         showScreen('questions-reveal-screen');
     }
@@ -1634,15 +1786,38 @@
     }
 
     function playAgain() {
-        gameState.currentPlayerIndex = 0;
-        startGame();
+        if (gameState.mode === 'multiplayer') {
+            if (!gameState.isHost) {
+                alert('Only the host can start a new round!');
+                return;
+            }
+            const roomRef = database.ref('rooms/' + gameState.roomCode);
+            roomRef.update({
+                gameStarted: false,
+                phase: 'lobby',
+                normalQuestion: null,
+                oddQuestion: null,
+                oddOneIndex: null,
+                oddOneName: null,
+                answers: null
+            });
+            gameState.phase = 'lobby';
+            showScreen('lobby-screen');
+        } else {
+            gameState.currentPlayerIndex = 0;
+            startGame();
+        }
     }
 
     function resetGame() {
-        gameState.currentPlayerIndex = 0;
-        gameState.players = [];
-        showScreen('mode-screen');
-        updatePlayersList();
+        if (gameState.mode === 'multiplayer' && database && gameState.roomCode) {
+            if (gameState.isHost) {
+                database.ref('rooms/' + gameState.roomCode).remove();
+            } else {
+                database.ref('rooms/' + gameState.roomCode + '/players/' + sanitizeKey(gameState.playerName)).remove();
+            }
+        }
+        hardReset();
     }
 
     function showScreen(screenId) {
@@ -1654,6 +1829,7 @@
             'setup-screen', 
             'question-screen', 
             'multiplayer-question-screen',
+            'answers-screen',
             'discussion-screen', 
             'questions-reveal-screen', 
             'results-screen'
