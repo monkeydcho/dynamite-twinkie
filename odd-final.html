@@ -864,7 +864,7 @@
             </div>
         </div>
 
-        <div class="setup-section" id="host-controls" class="hidden">
+        <div class="setup-section" id="host-controls" style="display:none">
             <label for="lobby-category">Choose Category</label>
             <select id="lobby-category">
                 <option value="love">Love & Relationships 💕</option>
@@ -933,7 +933,15 @@
 
         <div class="question-box">
             <p class="question-text" id="multiplayer-question-text"></p>
-            <div class="info-text">Waiting for all players to see their questions...</div>
+        </div>
+
+        <div id="mp-host-ready" class="hidden">
+            <p class="info-text" style="margin-bottom: 16px;">When everyone has read their question, start the discussion.</p>
+            <button class="btn" onclick="moveToDiscussion()">Everyone's Ready — Start Discussion</button>
+        </div>
+
+        <div id="mp-guest-ready">
+            <p class="info-text">Waiting for the host to start the discussion...</p>
         </div>
     </div>
 
@@ -949,8 +957,6 @@
 
         <button class="btn" onclick="showQuestionsReveal()">Reveal the Questions</button>
     </div>
-
-    <!-- Questions Reveal Screen -->
     <div id="questions-reveal-screen" class="hidden">
         <h2>The Majority Got...</h2>
 
@@ -984,7 +990,7 @@
 
 <script>
     // Firebase Configuration
-   const firebaseConfig = {
+ const firebaseConfig = {
   apiKey: "AIzaSyBNLimf247SRwWbn3gCFOz4agt9AsoogYI",
   authDomain: "dynamitetwinkie-7b197.firebaseapp.com",
   databaseURL: "https://dynamitetwinkie-7b197-default-rtdb.firebaseio.com",
@@ -1256,16 +1262,26 @@
             phase: 'lobby',
             createdAt: Date.now()
         }).then(() => {
-            // Listen for player updates
+            // Listen for room updates
             roomRef.on('value', (snapshot) => {
                 const roomData = snapshot.val();
-                if (roomData) {
-                    updateLobby(roomData);
+                if (!roomData) return;
+                updateLobby(roomData);
+                // Host also transitions when game starts
+                if (roomData.gameStarted && roomData.phase === 'question') {
+                    showMultiplayerQuestion(roomData);
+                }
+                // Show discussion when phase changes
+                if (roomData.phase === 'discussion') {
+                    gameState.normalQuestion = roomData.normalQuestion;
+                    gameState.oddQuestion = roomData.oddQuestion;
+                    gameState.oddOneName = roomData.oddOneName;
+                    showScreen('discussion-screen');
                 }
             });
 
             document.getElementById('display-room-code').textContent = gameState.roomCode;
-            document.getElementById('host-controls').classList.remove('hidden');
+            document.getElementById('host-controls').style.display = 'block';
             showScreen('lobby-screen');
         }).catch((error) => {
             alert('Error creating room: ' + error.message);
@@ -1322,13 +1338,19 @@
                 // Listen for updates
                 roomRef.on('value', (snapshot) => {
                     const roomData = snapshot.val();
-                    if (roomData) {
-                        updateLobby(roomData);
-                        
-                        // If game started, show question
-                        if (roomData.gameStarted && roomData.phase === 'question') {
-                            showMultiplayerQuestion(roomData);
-                        }
+                    if (!roomData) return;
+                    updateLobby(roomData);
+                    
+                    // If game started, show question
+                    if (roomData.gameStarted && roomData.phase === 'question') {
+                        showMultiplayerQuestion(roomData);
+                    }
+                    // If discussion phase
+                    if (roomData.phase === 'discussion') {
+                        gameState.normalQuestion = roomData.normalQuestion;
+                        gameState.oddQuestion = roomData.oddQuestion;
+                        gameState.oddOneName = roomData.oddOneName;
+                        showScreen('discussion-screen');
                     }
                 });
 
@@ -1353,10 +1375,32 @@
                 <span class="player-name">${player}${player === roomData.host ? ' (Host)' : ''}</span>
             </div>
         `).join('');
+
+        // Show host controls only to the host
+        const hostControls = document.getElementById('host-controls');
+        if (gameState.isHost) {
+            hostControls.style.display = 'block';
+        } else {
+            hostControls.style.display = 'none';
+            // Show waiting message for non-hosts
+            if (!document.getElementById('waiting-msg')) {
+                const msg = document.createElement('p');
+                msg.id = 'waiting-msg';
+                msg.className = 'info-text';
+                msg.textContent = 'Waiting for the host to start the game...';
+                msg.style.marginTop = '16px';
+                playersList.parentElement.appendChild(msg);
+            }
+        }
     }
 
     // Start Multiplayer Game
     function startMultiplayerGame() {
+        if (!gameState.isHost) {
+            alert('Only the host can start the game!');
+            return;
+        }
+
         const roomRef = database.ref('rooms/' + gameState.roomCode);
         
         roomRef.once('value').then((snapshot) => {
@@ -1374,7 +1418,11 @@
             const oddIndex = Math.floor(Math.random() * questions.odd.length);
             const oddOneIndex = Math.floor(Math.random() * players.length);
 
-            // Update room with game data
+            // Disable the button to prevent double-clicking
+            document.querySelector('#host-controls .btn').disabled = true;
+            document.querySelector('#host-controls .btn').textContent = 'Starting...';
+
+            // Update room with game data - all listeners will pick this up
             roomRef.update({
                 gameStarted: true,
                 phase: 'question',
@@ -1389,19 +1437,49 @@
 
     // Show Multiplayer Question
     function showMultiplayerQuestion(roomData) {
+        // Only transition once
+        if (document.getElementById('multiplayer-question-screen').classList.contains('hidden') === false) return;
+
         const playerIndex = roomData.players.indexOf(gameState.playerName);
         const isOddOne = playerIndex === roomData.oddOneIndex;
         const question = isOddOne ? roomData.oddQuestion : roomData.normalQuestion;
 
         document.getElementById('multiplayer-question-text').textContent = question;
+
+        // Show correct controls based on role
+        if (gameState.isHost) {
+            document.getElementById('mp-host-ready').classList.remove('hidden');
+            document.getElementById('mp-guest-ready').classList.add('hidden');
+        } else {
+            document.getElementById('mp-host-ready').classList.add('hidden');
+            document.getElementById('mp-guest-ready').classList.remove('hidden');
+        }
+
         showScreen('multiplayer-question-screen');
+    }
+
+    // Host moves everyone to discussion
+    function moveToDiscussion() {
+        const roomRef = database.ref('rooms/' + gameState.roomCode);
+        roomRef.update({ phase: 'discussion' });
     }
 
     // LOCAL GAME FUNCTIONS (same as original)
     document.getElementById('new-player-name').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            addPlayer();
-        }
+        if (e.key === 'Enter') addPlayer();
+    });
+
+    // Enter key for multiplayer inputs
+    document.getElementById('host-name').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') createRoom();
+    });
+
+    document.getElementById('player-name').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') joinRoom();
+    });
+
+    document.getElementById('join-code').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') joinRoom();
     });
 
     function addPlayer() {
@@ -1505,10 +1583,12 @@
     }
 
     function showOddOneOut() {
-        const oddOneName = gameState.players[gameState.oddOneIndex];
-        
+        // Local mode uses index, multiplayer already stored the name
+        const oddOneName = gameState.oddOneName || gameState.players[gameState.oddOneIndex];
+        const oddQuestion = gameState.oddQuestion;
+
         document.getElementById('odd-one-name').textContent = oddOneName;
-        document.getElementById('odd-question-reveal').textContent = `"${gameState.oddQuestion}"`;
+        document.getElementById('odd-question-reveal').textContent = `"${oddQuestion}"`;
 
         showScreen('results-screen');
     }
