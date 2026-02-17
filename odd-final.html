@@ -938,34 +938,53 @@
 
     <!-- Multiplayer Question Screen -->
     <div id="multiplayer-question-screen" class="hidden">
-        <h2>Your Question</h2>
-
-        <div class="question-box">
-            <p class="question-text" id="multiplayer-question-text"></p>
+        <div id="mp-question-view">
+            <h2>Your Question</h2>
+            <div class="question-box">
+                <p class="question-text" id="multiplayer-question-text"></p>
+            </div>
+            <div class="setup-section">
+                <label for="player-answer">Your Answer</label>
+                <input type="text" id="player-answer" placeholder="Type your answer here...">
+            </div>
+            <button class="btn" onclick="lockInAnswer()">Lock In Answer</button>
         </div>
 
-        <div class="setup-section">
-            <label for="player-answer">Your Answer</label>
-            <input type="text" id="player-answer" placeholder="Type your answer here...">
-        </div>
-
-        <div id="mp-host-ready" class="hidden">
-            <p class="info-text" style="margin-bottom: 16px;">When everyone has typed their answer, show them to the group.</p>
-            <button class="btn" onclick="moveToDiscussion()">Show Everyone's Answers</button>
-        </div>
-
-        <div id="mp-guest-ready">
-            <p class="info-text">Waiting for the host to show everyone's answers...</p>
+        <div id="mp-answer-view" class="hidden">
+            <h2>Your Answer</h2>
+            <div class="question-box" style="min-height: 300px; display: flex; align-items: center; justify-content: center;">
+                <p class="question-text" id="locked-answer-display" style="font-size: 2.2rem;"></p>
+            </div>
+            
+            <div id="host-controls-answer-view" class="hidden">
+                <button class="btn btn-secondary" onclick="toggleBackToQuestion()" id="toggle-back-btn" style="margin-bottom: 12px;">Show My Question</button>
+                <button class="btn" onclick="moveToDiscussion()">Show Everyone's Answers</button>
+            </div>
+            
+            <div id="guest-waiting-view">
+                <p class="info-text">Waiting for host to show everyone's answers...</p>
+            </div>
         </div>
     </div>
 
     <!-- Answers Board Screen (shown after host proceeds) -->
     <div id="answers-screen" class="hidden">
-        <h2>Everyone's Answers</h2>
-        <div id="answers-list"></div>
+        <h2 style="margin-bottom: 32px;">Everyone's Answers</h2>
+        
+        <div id="answers-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px;">
+            <!-- Answers populate here -->
+        </div>
+
+        <div id="majority-question-display" class="hidden" style="margin-bottom: 32px;">
+            <div class="reveal-box" style="padding: 56px 40px;">
+                <h3 style="font-size: 1.8rem; margin-bottom: 20px; color: #fef3c7;">Most players got:</h3>
+                <p class="question-preview" style="font-size: 1.8rem;" id="majority-q-text"></p>
+            </div>
+        </div>
+
         <div id="host-answers-controls" class="hidden">
             <button class="btn btn-secondary" onclick="toggleMajorityQuestion()" id="toggle-question-btn">Show the Question</button>
-            <button class="btn" onclick="showQuestionsReveal()" style="margin-top: 12px;">Reveal the Questions</button>
+            <button class="btn" onclick="showQuestionsReveal()" style="margin-top: 12px;">Continue to Reveal</button>
         </div>
         <div id="guest-answers-waiting">
             <p class="info-text" style="margin-top: 16px;">Waiting for host to continue...</p>
@@ -1456,46 +1475,128 @@
 
         document.getElementById('multiplayer-question-text').textContent = question;
         document.getElementById('player-answer').value = '';
-
-        if (gameState.isHost) {
-            document.getElementById('mp-host-ready').classList.remove('hidden');
-            document.getElementById('mp-guest-ready').classList.add('hidden');
-        } else {
-            document.getElementById('mp-host-ready').classList.add('hidden');
-            document.getElementById('mp-guest-ready').classList.remove('hidden');
-        }
+        
+        // Reset to question view
+        document.getElementById('mp-question-view').classList.remove('hidden');
+        document.getElementById('mp-answer-view').classList.add('hidden');
 
         showScreen('multiplayer-question-screen');
     }
 
-    // Host moves everyone to answers phase — saves host's answer first
-    function moveToDiscussion() {
+    // Player locks in their answer
+    function lockInAnswer() {
         const answer = document.getElementById('player-answer').value.trim();
+        
+        if (!answer) {
+            alert('Please type an answer first!');
+            return;
+        }
+
+        // Save answer to Firebase
         const roomRef = database.ref('rooms/' + gameState.roomCode);
         const answerKey = 'answers/' + sanitizeKey(gameState.playerName);
-        roomRef.child(answerKey).set(answer || '(no answer)').then(() => {
-            roomRef.update({ phase: 'answers' });
+        
+        console.log('Locking in answer:', answer);
+        
+        roomRef.child(answerKey).set(answer).then(() => {
+            // Show only the answer
+            document.getElementById('locked-answer-display').textContent = `"${answer}"`;
+            document.getElementById('mp-question-view').classList.add('hidden');
+            document.getElementById('mp-answer-view').classList.remove('hidden');
+            
+            // Show appropriate controls
+            if (gameState.isHost) {
+                document.getElementById('host-controls-answer-view').classList.remove('hidden');
+                document.getElementById('guest-waiting-view').classList.add('hidden');
+            } else {
+                document.getElementById('host-controls-answer-view').classList.add('hidden');
+                document.getElementById('guest-waiting-view').classList.remove('hidden');
+            }
+            
+            gameState.viewingOwnQuestion = false;
         });
     }
 
-    // Render the answers board
+    // Host toggles between their answer and their question
+    let viewingOwnQuestion = false;
+    function toggleBackToQuestion() {
+        const btn = document.getElementById('toggle-back-btn');
+        const questionBox = document.getElementById('mp-answer-view').querySelector('.question-box');
+        const displayText = document.getElementById('locked-answer-display');
+        
+        if (!viewingOwnQuestion) {
+            // Show question
+            const myQuestion = document.getElementById('multiplayer-question-text').textContent;
+            displayText.textContent = myQuestion;
+            btn.textContent = 'Show My Answer';
+            viewingOwnQuestion = true;
+        } else {
+            // Show answer
+            const myAnswer = document.getElementById('player-answer').value.trim();
+            displayText.textContent = `"${myAnswer}"`;
+            btn.textContent = 'Show My Question';
+            viewingOwnQuestion = false;
+        }
+    }
+
+    // Host moves everyone to answers phase
+    function moveToDiscussion() {
+        console.log('Host moving to answers phase');
+        const roomRef = database.ref('rooms/' + gameState.roomCode);
+        roomRef.update({ phase: 'answers' }).then(() => {
+            console.log('Phase updated to answers');
+        });
+    }
+
+    // Render the answers board - whiteboard style
     function showAnswersScreen(roomData) {
         const playerNames = Object.values(roomData.players || {});
         const answers = roomData.answers || {};
 
-        const list = document.getElementById('answers-list');
-        list.innerHTML = playerNames.map(name => {
+        const grid = document.getElementById('answers-grid');
+        const majorityDisplay = document.getElementById('majority-question-display');
+        
+        // Show answers grid, hide question
+        grid.classList.remove('hidden');
+        majorityDisplay.classList.add('hidden');
+
+        grid.innerHTML = playerNames.map(name => {
             const key = sanitizeKey(name);
-            const answer = answers[key] || '...';
+            const answer = answers[key] || '(no answer yet)';
             return `
-                <div class="player-item" style="flex-direction:column; align-items:flex-start; gap:6px;">
-                    <span class="player-name">${name}</span>
-                    <span style="color:#fef3c7; font-size:1.1rem; font-style:italic;">${answer}</span>
+                <div style="
+                    background: linear-gradient(135deg, rgba(61, 40, 23, 0.9) 0%, rgba(74, 51, 32, 0.95) 100%);
+                    padding: 32px 28px;
+                    border-radius: 16px;
+                    border: 3px solid rgba(139, 98, 66, 0.5);
+                    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+                    min-height: 200px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    gap: 16px;
+                ">
+                    <div style="
+                        font-family: 'Righteous', sans-serif;
+                        font-size: 1.4rem;
+                        color: #fbbf24;
+                        text-shadow: 2px 2px 0 rgba(120, 53, 15, 0.5);
+                    ">${name}</div>
+                    <div style="
+                        color: #fef3c7;
+                        font-size: 1.3rem;
+                        font-style: italic;
+                        line-height: 1.5;
+                        font-weight: 600;
+                    ">"${answer}"</div>
                 </div>
             `;
         }).join('');
 
         showingMajorityQuestion = false;
+        document.getElementById('toggle-question-btn').textContent = 'Show the Question';
 
         if (gameState.isHost) {
             document.getElementById('host-answers-controls').classList.remove('hidden');
@@ -1512,20 +1613,21 @@
     let showingMajorityQuestion = false;
     function toggleMajorityQuestion() {
         const btn = document.getElementById('toggle-question-btn');
-        const list = document.getElementById('answers-list');
+        const grid = document.getElementById('answers-grid');
+        const questionDisplay = document.getElementById('majority-question-display');
+        const questionText = document.getElementById('majority-q-text');
 
         if (!showingMajorityQuestion) {
-            list.innerHTML = `
-                <div class="reveal-box" style="margin-bottom:20px;">
-                    <h3 style="margin-bottom:12px;">Most players got:</h3>
-                    <p class="question-preview">"${gameState.normalQuestion}"</p>
-                </div>
-            `;
+            // Hide answers, show question
+            grid.classList.add('hidden');
+            questionDisplay.classList.remove('hidden');
+            questionText.textContent = `"${gameState.normalQuestion}"`;
             btn.textContent = 'Show Answers';
             showingMajorityQuestion = true;
         } else {
-            const roomRef = database.ref('rooms/' + gameState.roomCode);
-            roomRef.once('value').then(snap => showAnswersScreen(snap.val()));
+            // Hide question, show answers
+            questionDisplay.classList.add('hidden');
+            grid.classList.remove('hidden');
             btn.textContent = 'Show the Question';
             showingMajorityQuestion = false;
         }
@@ -1620,16 +1722,17 @@
             }
 
             if (phase === 'answers' && gameState.phase !== 'answers') {
+                console.log('Transitioning to answers phase');
                 gameState.phase = 'answers';
-                // Guests: save their answer before the screen switches
-                if (!gameState.isHost) {
-                    const answer = document.getElementById('player-answer').value.trim();
-                    roomRef.child('answers/' + sanitizeKey(gameState.playerName)).set(answer || '(no answer)');
-                }
-                // Small delay so guest answer saves before we render
+                
+                // Fetch and show the answers screen
                 setTimeout(() => {
-                    roomRef.once('value').then(snap => showAnswersScreen(snap.val()));
-                }, 400);
+                    console.log('Fetching room data for answers screen');
+                    roomRef.once('value').then(snap => {
+                        console.log('Room data:', snap.val());
+                        showAnswersScreen(snap.val());
+                    });
+                }, 200);
                 return;
             }
 
@@ -1668,6 +1771,10 @@
 
     document.getElementById('rename-input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') changeName();
+    });
+
+    document.getElementById('player-answer').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') lockInAnswer();
     });
 
     function addPlayer() {
