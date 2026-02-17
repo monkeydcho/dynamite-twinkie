@@ -1033,7 +1033,6 @@
   appId: "1:644017159848:web:45d61846f1977ba650cc9d"
 };
 
-
     // Initialize Firebase
     let database = null;
     try {
@@ -1492,13 +1491,21 @@
             return;
         }
 
+        if (!database) {
+            alert('Firebase is not connected!');
+            return;
+        }
+
         // Save answer to Firebase
         const roomRef = database.ref('rooms/' + gameState.roomCode);
         const answerKey = 'answers/' + sanitizeKey(gameState.playerName);
         
-        console.log('Locking in answer:', answer);
+        console.log('Locking in answer:', answer, 'for player:', gameState.playerName);
+        console.log('Answer key:', answerKey);
+        console.log('Room code:', gameState.roomCode);
         
         roomRef.child(answerKey).set(answer).then(() => {
+            console.log('Answer saved successfully to Firebase');
             // Show only the answer
             document.getElementById('locked-answer-display').textContent = `"${answer}"`;
             document.getElementById('mp-question-view').classList.add('hidden');
@@ -1514,6 +1521,10 @@
             }
             
             gameState.viewingOwnQuestion = false;
+            console.log('Switched to answer view');
+        }).catch((error) => {
+            console.error('Error saving answer to Firebase:', error);
+            alert('Failed to save answer: ' + error.message);
         });
     }
 
@@ -1761,21 +1772,33 @@
     });
 
     // Enter key for multiplayer inputs
-    document.getElementById('mode-player-name').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') confirmMode();
-    });
+    const modePlayerName = document.getElementById('mode-player-name');
+    if (modePlayerName) {
+        modePlayerName.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') confirmMode();
+        });
+    }
 
-    document.getElementById('join-code').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') joinRoom();
-    });
+    const joinCode = document.getElementById('join-code');
+    if (joinCode) {
+        joinCode.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') joinRoom();
+        });
+    }
 
-    document.getElementById('rename-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') changeName();
-    });
+    const renameInput = document.getElementById('rename-input');
+    if (renameInput) {
+        renameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') changeName();
+        });
+    }
 
-    document.getElementById('player-answer').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') lockInAnswer();
-    });
+    const playerAnswer = document.getElementById('player-answer');
+    if (playerAnswer) {
+        playerAnswer.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') lockInAnswer();
+        });
+    }
 
     function addPlayer() {
         const input = document.getElementById('new-player-name');
