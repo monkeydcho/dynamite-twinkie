@@ -957,55 +957,27 @@
             </div>
             
             <div id="host-controls-answer-view" class="hidden">
-                <button class="btn btn-secondary" onclick="toggleBackToQuestion()" id="toggle-back-btn" style="margin-bottom: 12px;">Show My Question</button>
-                <button class="btn" onclick="moveToDiscussion()">Show Everyone's Answers</button>
+                <button class="btn btn-secondary" onclick="toggleToMajorityQuestion()" id="toggle-majority-btn" style="margin-bottom: 12px;">Show Majority Question</button>
+                <button class="btn" onclick="revealOddOneOut()">Reveal the Odd One Out</button>
             </div>
             
             <div id="guest-waiting-view">
-                <p class="info-text">Waiting for host to show everyone's answers...</p>
+                <p class="info-text">Waiting for host to reveal the odd one out...</p>
             </div>
         </div>
-    </div>
-
-    <!-- Answers Board Screen (shown after host proceeds) -->
-    <div id="answers-screen" class="hidden">
-        <h2 style="margin-bottom: 32px;">Everyone's Answers</h2>
-        
-        <div id="answers-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px;">
-            <!-- Answers populate here -->
-        </div>
-
-        <div id="majority-question-display" class="hidden" style="margin-bottom: 32px;">
-            <div class="reveal-box" style="padding: 56px 40px;">
-                <h3 style="font-size: 1.8rem; margin-bottom: 20px; color: #fef3c7;">Most players got:</h3>
-                <p class="question-preview" style="font-size: 1.8rem;" id="majority-q-text"></p>
-            </div>
-        </div>
-
-        <div id="host-answers-controls" class="hidden">
-            <button class="btn btn-secondary" onclick="toggleMajorityQuestion()" id="toggle-question-btn">Show the Question</button>
-            <button class="btn" onclick="showQuestionsReveal()" style="margin-top: 12px;">Continue to Reveal</button>
-        </div>
-        <div id="guest-answers-waiting">
-            <p class="info-text" style="margin-top: 16px;">Waiting for host to continue...</p>
-        </div>
-    </div>
-    <div id="questions-reveal-screen" class="hidden">
-        <h2>The Majority Got...</h2>
-
-        <div class="reveal-box">
-            <p class="question-preview" id="normal-question-reveal"></p>
-        </div>
-
-        <button class="btn" onclick="showOddOneOut()">Reveal the Odd One Out</button>
     </div>
 
     <!-- Results Screen -->
     <div id="results-screen" class="hidden">
-        <h2>The Odd One Out Was...</h2>
+        <h2>The Reveal</h2>
+
+        <div class="reveal-box" style="margin-bottom: 24px;">
+            <h3>Most players got:</h3>
+            <p class="question-preview" id="normal-question-reveal"></p>
+        </div>
 
         <div class="result-announcement">
-            <h3>It was...</h3>
+            <h3>The Odd One Out was...</h3>
             <div class="odd-one-name" id="odd-one-name"></div>
         </div>
 
@@ -1032,6 +1004,7 @@
   messagingSenderId: "644017159848",
   appId: "1:644017159848:web:45d61846f1977ba650cc9d"
 };
+
 
     // Initialize Firebase
     let database = null;
@@ -1528,122 +1501,40 @@
         });
     }
 
-    // Host toggles between their answer and their question
-    let viewingOwnQuestion = false;
-    function toggleBackToQuestion() {
-        const btn = document.getElementById('toggle-back-btn');
-        const questionBox = document.getElementById('mp-answer-view').querySelector('.question-box');
+    // Host toggles between their answer and the majority question
+    let viewingMajorityQuestion = false;
+    function toggleToMajorityQuestion() {
+        const btn = document.getElementById('toggle-majority-btn');
         const displayText = document.getElementById('locked-answer-display');
         
-        if (!viewingOwnQuestion) {
-            // Show question
-            const myQuestion = document.getElementById('multiplayer-question-text').textContent;
-            displayText.textContent = myQuestion;
+        if (!viewingMajorityQuestion) {
+            // Show majority question
+            displayText.textContent = gameState.normalQuestion;
             btn.textContent = 'Show My Answer';
-            viewingOwnQuestion = true;
+            viewingMajorityQuestion = true;
         } else {
             // Show answer
             const myAnswer = document.getElementById('player-answer').value.trim();
             displayText.textContent = `"${myAnswer}"`;
-            btn.textContent = 'Show My Question';
-            viewingOwnQuestion = false;
+            btn.textContent = 'Show Majority Question';
+            viewingMajorityQuestion = false;
         }
     }
 
-    // Host moves everyone to answers phase
-    function moveToDiscussion() {
-        console.log('Host moving to answers phase');
+    // Host reveals the odd one out to everyone
+    function revealOddOneOut() {
+        if (!gameState.isHost) {
+            alert('Only the host can reveal the odd one out!');
+            return;
+        }
+        console.log('Host revealing odd one out');
         const roomRef = database.ref('rooms/' + gameState.roomCode);
-        roomRef.update({ phase: 'answers' }).then(() => {
-            console.log('Phase updated to answers');
+        roomRef.update({ phase: 'reveal' }).then(() => {
+            console.log('Phase updated to reveal');
         });
     }
 
     // Render the answers board - whiteboard style
-    function showAnswersScreen(roomData) {
-        const playerNames = Object.values(roomData.players || {});
-        const answers = roomData.answers || {};
-
-        const grid = document.getElementById('answers-grid');
-        const majorityDisplay = document.getElementById('majority-question-display');
-        
-        // Show answers grid, hide question
-        grid.classList.remove('hidden');
-        majorityDisplay.classList.add('hidden');
-
-        grid.innerHTML = playerNames.map(name => {
-            const key = sanitizeKey(name);
-            const answer = answers[key] || '(no answer yet)';
-            return `
-                <div style="
-                    background: linear-gradient(135deg, rgba(61, 40, 23, 0.9) 0%, rgba(74, 51, 32, 0.95) 100%);
-                    padding: 32px 28px;
-                    border-radius: 16px;
-                    border: 3px solid rgba(139, 98, 66, 0.5);
-                    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
-                    min-height: 200px;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    text-align: center;
-                    gap: 16px;
-                ">
-                    <div style="
-                        font-family: 'Righteous', sans-serif;
-                        font-size: 1.4rem;
-                        color: #fbbf24;
-                        text-shadow: 2px 2px 0 rgba(120, 53, 15, 0.5);
-                    ">${name}</div>
-                    <div style="
-                        color: #fef3c7;
-                        font-size: 1.3rem;
-                        font-style: italic;
-                        line-height: 1.5;
-                        font-weight: 600;
-                    ">"${answer}"</div>
-                </div>
-            `;
-        }).join('');
-
-        showingMajorityQuestion = false;
-        document.getElementById('toggle-question-btn').textContent = 'Show the Question';
-
-        if (gameState.isHost) {
-            document.getElementById('host-answers-controls').classList.remove('hidden');
-            document.getElementById('guest-answers-waiting').classList.add('hidden');
-        } else {
-            document.getElementById('host-answers-controls').classList.add('hidden');
-            document.getElementById('guest-answers-waiting').classList.remove('hidden');
-        }
-
-        showScreen('answers-screen');
-    }
-
-    // Host toggles between answers and majority question
-    let showingMajorityQuestion = false;
-    function toggleMajorityQuestion() {
-        const btn = document.getElementById('toggle-question-btn');
-        const grid = document.getElementById('answers-grid');
-        const questionDisplay = document.getElementById('majority-question-display');
-        const questionText = document.getElementById('majority-q-text');
-
-        if (!showingMajorityQuestion) {
-            // Hide answers, show question
-            grid.classList.add('hidden');
-            questionDisplay.classList.remove('hidden');
-            questionText.textContent = `"${gameState.normalQuestion}"`;
-            btn.textContent = 'Show Answers';
-            showingMajorityQuestion = true;
-        } else {
-            // Hide question, show answers
-            questionDisplay.classList.add('hidden');
-            grid.classList.remove('hidden');
-            btn.textContent = 'Show the Question';
-            showingMajorityQuestion = false;
-        }
-    }
-
     // Sanitize name to safe Firebase key
     function sanitizeKey(name) {
         return name.replace(/[.#$[\]/]/g, '_').toLowerCase();
@@ -1732,24 +1623,9 @@
                 return;
             }
 
-            if (phase === 'answers' && gameState.phase !== 'answers') {
-                console.log('Transitioning to answers phase');
-                gameState.phase = 'answers';
-                
-                // Fetch and show the answers screen
-                setTimeout(() => {
-                    console.log('Fetching room data for answers screen');
-                    roomRef.once('value').then(snap => {
-                        console.log('Room data:', snap.val());
-                        showAnswersScreen(snap.val());
-                    });
-                }, 200);
-                return;
-            }
-
             if (phase === 'reveal' && gameState.phase !== 'reveal') {
                 gameState.phase = 'reveal';
-                showQuestionsReveal();
+                showOddOneOut();
                 return;
             }
         });
@@ -1895,20 +1771,14 @@
         showScreen('discussion-screen');
     }
 
-    function showQuestionsReveal() {
-        if (gameState.mode === 'multiplayer') {
-            // Host pushes reveal phase to all
-            database.ref('rooms/' + gameState.roomCode).update({ phase: 'reveal' });
-        }
-        document.getElementById('normal-question-reveal').textContent = `"${gameState.normalQuestion}"`;
-        showScreen('questions-reveal-screen');
-    }
-
     function showOddOneOut() {
-        // Local mode uses index, multiplayer already stored the name
+        // Both local and multiplayer use this
         const oddOneName = gameState.oddOneName || gameState.players[gameState.oddOneIndex];
         const oddQuestion = gameState.oddQuestion;
+        const normalQuestion = gameState.normalQuestion;
 
+        // Show both questions first
+        document.getElementById('normal-question-reveal').textContent = `"${normalQuestion}"`;
         document.getElementById('odd-one-name').textContent = oddOneName;
         document.getElementById('odd-question-reveal').textContent = `"${oddQuestion}"`;
 
@@ -1959,7 +1829,6 @@
             'setup-screen', 
             'question-screen', 
             'multiplayer-question-screen',
-            'answers-screen',
             'discussion-screen', 
             'questions-reveal-screen', 
             'results-screen'
