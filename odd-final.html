@@ -798,27 +798,36 @@
     <!-- Mode Selection Screen -->
     <div id="mode-screen">
         <h1>Odd One Out</h1>
-        <p class="subtitle">Choose your game mode</p>
+        <p class="subtitle">One player gets a different question. Can you find them?</p>
 
         <div class="setup-section">
-            <div class="mode-toggle">
-                <button class="mode-btn active" onclick="selectMode('local', event)">
+            <label>How are you playing?</label>
+            <div class="mode-toggle" style="margin-bottom: 24px;">
+                <button class="mode-btn active" id="mode-btn-local" onclick="selectMode('local', event)">
                     Single Device<br>
                     <small style="font-size: 0.85rem; opacity: 0.8;">Pass & play</small>
                 </button>
-                <button class="mode-btn" onclick="selectMode('multiplayer', event)">
+                <button class="mode-btn" id="mode-btn-multiplayer" onclick="selectMode('multiplayer', event)">
                     Multiplayer<br>
-                    <small style="font-size: 0.85rem; opacity: 0.8;">Each person's phone</small>
+                    <small style="font-size: 0.85rem; opacity: 0.8;">Own phones</small>
                 </button>
             </div>
-            <button class="btn" onclick="confirmMode()">Continue</button>
+
+            <div id="mode-name-section">
+                <label for="mode-player-name" id="mode-name-label">No name needed — you'll add players on the next screen</label>
+                <div id="mode-name-input-wrap" class="hidden">
+                    <input type="text" id="mode-player-name" placeholder="Enter your name">
+                </div>
+            </div>
+
+            <button class="btn" onclick="confirmMode()" style="margin-top: 20px;">Continue</button>
         </div>
     </div>
 
     <!-- Multiplayer Join Screen -->
     <div id="join-screen" class="hidden">
         <h1>Odd One Out</h1>
-        <p class="subtitle">Join or create a room</p>
+        <p class="subtitle" id="join-subtitle"></p>
 
         <div class="setup-section">
             <div class="mode-toggle">
@@ -831,16 +840,12 @@
             </div>
 
             <div id="create-room-section">
-                <label for="host-name">Your Name</label>
-                <input type="text" id="host-name" placeholder="Enter your name">
                 <button class="btn" onclick="createRoom()">Create Room</button>
             </div>
 
             <div id="join-room-section" class="hidden">
                 <label for="join-code">Room Code</label>
-                <input type="text" id="join-code" placeholder="Enter 4-digit code" maxlength="4">
-                <label for="player-name">Your Name</label>
-                <input type="text" id="player-name" placeholder="Enter your name">
+                <input type="text" id="join-code" placeholder="Enter 4-digit code" maxlength="4" style="margin-bottom: 16px;">
                 <button class="btn" onclick="joinRoom()">Join Room</button>
             </div>
         </div>
@@ -990,7 +995,7 @@
 
 <script>
     // Firebase Configuration
- const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyBNLimf247SRwWbn3gCFOz4agt9AsoogYI",
   authDomain: "dynamitetwinkie-7b197.firebaseapp.com",
   databaseURL: "https://dynamitetwinkie-7b197-default-rtdb.firebaseio.com",
@@ -999,7 +1004,7 @@
   messagingSenderId: "644017159848",
   appId: "1:644017159848:web:45d61846f1977ba650cc9d"
 };
-
+;
 
     // Initialize Firebase
     let database = null;
@@ -1195,12 +1200,32 @@
         document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
         event.target.closest('.mode-btn').classList.add('active');
         gameState.mode = mode;
+
+        const label = document.getElementById('mode-name-label');
+        const inputWrap = document.getElementById('mode-name-input-wrap');
+
+        if (mode === 'multiplayer') {
+            label.textContent = 'Your name';
+            inputWrap.classList.remove('hidden');
+            document.getElementById('mode-player-name').focus();
+        } else {
+            label.textContent = "No name needed — you'll add players on the next screen";
+            inputWrap.classList.add('hidden');
+        }
         console.log('gameState.mode set to:', gameState.mode);
     }
 
     function confirmMode() {
         console.log('confirmMode called, mode is:', gameState.mode);
+
         if (gameState.mode === 'multiplayer') {
+            const name = document.getElementById('mode-player-name').value.trim();
+            if (!name) {
+                alert('Please enter your name first!');
+                return;
+            }
+            gameState.playerName = name;
+            document.getElementById('join-subtitle').textContent = 'Hey ' + name + '! Create or join a room.';
             console.log('Switching to join-screen');
             showScreen('join-screen');
         } else {
@@ -1236,10 +1261,10 @@
 
     // Create Room
     function createRoom() {
-        const hostName = document.getElementById('host-name').value.trim();
-        
+        const hostName = gameState.playerName;
+
         if (!hostName) {
-            alert('Please enter your name!');
+            alert('Something went wrong — no name found. Please go back and enter your name.');
             return;
         }
 
@@ -1250,7 +1275,6 @@
 
         gameState.roomCode = generateRoomCode();
         gameState.isHost = true;
-        gameState.playerName = hostName;
 
         // Create room in Firebase
         const roomRef = database.ref('rooms/' + gameState.roomCode);
@@ -1266,13 +1290,23 @@
             roomRef.on('value', (snapshot) => {
                 const roomData = snapshot.val();
                 if (!roomData) return;
-                updateLobby(roomData);
-                // Host also transitions when game starts
-                if (roomData.gameStarted && roomData.phase === 'question') {
+
+                const phase = roomData.phase;
+
+                // Only update lobby UI while in lobby
+                if (phase === 'lobby') {
+                    updateLobby(roomData);
+                }
+
+                // Transition to question screen once
+                if (phase === 'question' && gameState.phase !== 'question') {
+                    gameState.phase = 'question';
                     showMultiplayerQuestion(roomData);
                 }
-                // Show discussion when phase changes
-                if (roomData.phase === 'discussion') {
+
+                // Transition to discussion screen once
+                if (phase === 'discussion' && gameState.phase !== 'discussion') {
+                    gameState.phase = 'discussion';
                     gameState.normalQuestion = roomData.normalQuestion;
                     gameState.oddQuestion = roomData.oddQuestion;
                     gameState.oddOneName = roomData.oddOneName;
@@ -1291,7 +1325,7 @@
     // Join Room
     function joinRoom() {
         const roomCode = document.getElementById('join-code').value.trim();
-        const playerName = document.getElementById('player-name').value.trim();
+        const playerName = gameState.playerName;
 
         if (!roomCode || roomCode.length !== 4) {
             alert('Please enter a valid 4-digit room code!');
@@ -1299,7 +1333,7 @@
         }
 
         if (!playerName) {
-            alert('Please enter your name!');
+            alert('Something went wrong — no name found. Please go back and enter your name.');
             return;
         }
 
@@ -1310,7 +1344,6 @@
 
         gameState.roomCode = roomCode;
         gameState.isHost = false;
-        gameState.playerName = playerName;
 
         // Check if room exists
         const roomRef = database.ref('rooms/' + roomCode);
@@ -1339,14 +1372,23 @@
                 roomRef.on('value', (snapshot) => {
                     const roomData = snapshot.val();
                     if (!roomData) return;
-                    updateLobby(roomData);
-                    
-                    // If game started, show question
-                    if (roomData.gameStarted && roomData.phase === 'question') {
+
+                    const phase = roomData.phase;
+
+                    // Only update lobby UI while in lobby
+                    if (phase === 'lobby') {
+                        updateLobby(roomData);
+                    }
+
+                    // Transition to question screen once
+                    if (phase === 'question' && gameState.phase !== 'question') {
+                        gameState.phase = 'question';
                         showMultiplayerQuestion(roomData);
                     }
-                    // If discussion phase
-                    if (roomData.phase === 'discussion') {
+
+                    // Transition to discussion screen once
+                    if (phase === 'discussion' && gameState.phase !== 'discussion') {
+                        gameState.phase = 'discussion';
                         gameState.normalQuestion = roomData.normalQuestion;
                         gameState.oddQuestion = roomData.oddQuestion;
                         gameState.oddOneName = roomData.oddOneName;
@@ -1470,12 +1512,8 @@
     });
 
     // Enter key for multiplayer inputs
-    document.getElementById('host-name').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') createRoom();
-    });
-
-    document.getElementById('player-name').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') joinRoom();
+    document.getElementById('mode-player-name').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') confirmMode();
     });
 
     document.getElementById('join-code').addEventListener('keypress', function(e) {
