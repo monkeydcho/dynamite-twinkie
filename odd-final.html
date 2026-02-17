@@ -995,7 +995,7 @@
 
 <script>
     // Firebase Configuration
-   const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyBNLimf247SRwWbn3gCFOz4agt9AsoogYI",
   authDomain: "dynamitetwinkie-7b197.firebaseapp.com",
   databaseURL: "https://dynamitetwinkie-7b197-default-rtdb.firebaseio.com",
@@ -1004,7 +1004,7 @@
   messagingSenderId: "644017159848",
   appId: "1:644017159848:web:45d61846f1977ba650cc9d"
 };
-;
+
 
     // Initialize Firebase
     let database = null;
@@ -1286,34 +1286,37 @@
             phase: 'lobby',
             createdAt: Date.now()
         }).then(() => {
-            // Listen for room updates
-            roomRef.on('value', (snapshot) => {
+            gameState.roomRef = roomRef;
+
+            const onRoomUpdate = (snapshot) => {
                 const roomData = snapshot.val();
                 if (!roomData) return;
 
                 const phase = roomData.phase;
 
-                // Only update lobby UI while in lobby
                 if (phase === 'lobby') {
                     updateLobby(roomData);
+                    return; // stop here while in lobby
                 }
 
-                // Transition to question screen once
                 if (phase === 'question' && gameState.phase !== 'question') {
                     gameState.phase = 'question';
                     showMultiplayerQuestion(roomData);
+                    return;
                 }
 
-                // Transition to discussion screen once
                 if (phase === 'discussion' && gameState.phase !== 'discussion') {
                     gameState.phase = 'discussion';
+                    // Detach listener — we don't need it anymore
+                    roomRef.off('value', onRoomUpdate);
                     gameState.normalQuestion = roomData.normalQuestion;
                     gameState.oddQuestion = roomData.oddQuestion;
                     gameState.oddOneName = roomData.oddOneName;
                     showScreen('discussion-screen');
                 }
-            });
+            };
 
+            roomRef.on('value', onRoomUpdate);
             document.getElementById('display-room-code').textContent = gameState.roomCode;
             document.getElementById('host-controls').style.display = 'block';
             showScreen('lobby-screen');
@@ -1368,34 +1371,37 @@
 
             players.push(playerName);
             roomRef.update({ players: players }).then(() => {
-                // Listen for updates
-                roomRef.on('value', (snapshot) => {
+                gameState.roomRef = roomRef;
+
+                const onRoomUpdate = (snapshot) => {
                     const roomData = snapshot.val();
                     if (!roomData) return;
 
                     const phase = roomData.phase;
 
-                    // Only update lobby UI while in lobby
                     if (phase === 'lobby') {
                         updateLobby(roomData);
+                        return;
                     }
 
-                    // Transition to question screen once
                     if (phase === 'question' && gameState.phase !== 'question') {
                         gameState.phase = 'question';
                         showMultiplayerQuestion(roomData);
+                        return;
                     }
 
-                    // Transition to discussion screen once
                     if (phase === 'discussion' && gameState.phase !== 'discussion') {
                         gameState.phase = 'discussion';
+                        // Detach listener — we don't need it anymore
+                        roomRef.off('value', onRoomUpdate);
                         gameState.normalQuestion = roomData.normalQuestion;
                         gameState.oddQuestion = roomData.oddQuestion;
                         gameState.oddOneName = roomData.oddOneName;
                         showScreen('discussion-screen');
                     }
-                });
+                };
 
+                roomRef.on('value', onRoomUpdate);
                 document.getElementById('display-room-code').textContent = roomCode;
                 showScreen('lobby-screen');
             });
@@ -1479,16 +1485,12 @@
 
     // Show Multiplayer Question
     function showMultiplayerQuestion(roomData) {
-        // Only transition once
-        if (document.getElementById('multiplayer-question-screen').classList.contains('hidden') === false) return;
-
         const playerIndex = roomData.players.indexOf(gameState.playerName);
         const isOddOne = playerIndex === roomData.oddOneIndex;
         const question = isOddOne ? roomData.oddQuestion : roomData.normalQuestion;
 
         document.getElementById('multiplayer-question-text').textContent = question;
 
-        // Show correct controls based on role
         if (gameState.isHost) {
             document.getElementById('mp-host-ready').classList.remove('hidden');
             document.getElementById('mp-guest-ready').classList.add('hidden');
