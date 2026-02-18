@@ -996,13 +996,13 @@
 <script>
     // Firebase Configuration
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "AIzaSyBNLimf247SRwWbn3gCFOz4agt9AsoogYI",
+        authDomain: "dynamitetwinkie-7b197.firebaseapp.com",
+        databaseURL: "https://dynamitetwinkie-7b197-default-rtdb.firebaseio.com",
+        projectId: "dynamitetwinkie-7b197",
+        storageBucket: "dynamitetwinkie-7b197.firebasestorage.app",
+        messagingSenderId: "644017159848",
+        appId: "1:644017159848:web:45d61846f1977ba650cc9d"
     };
 
     // Initialize Firebase
@@ -1260,6 +1260,10 @@
 
     // Create Room
     function createRoom() {
+        console.log('createRoom called');
+        console.log('gameState.playerName:', gameState.playerName);
+        console.log('database:', database);
+        
         const hostName = gameState.playerName;
 
         if (!hostName) {
@@ -1275,6 +1279,8 @@
         gameState.roomCode = generateRoomCode();
         gameState.isHost = true;
 
+        console.log('Creating room with code:', gameState.roomCode);
+
         // Create room in Firebase
         const roomRef = database.ref('rooms/' + gameState.roomCode);
         roomRef.set({
@@ -1285,6 +1291,7 @@
             phase: 'lobby',
             createdAt: Date.now()
         }).then(() => {
+            console.log('Room created successfully');
             gameState.roomRef = roomRef;
             setupPresence(roomRef, hostName, true);
             attachRoomListener(roomRef);
@@ -1492,7 +1499,7 @@
                 document.getElementById('guest-waiting-view').classList.remove('hidden');
             }
             
-            gameState.viewingOwnQuestion = false;
+            viewingMajorityQuestion = false;
             console.log('Switched to answer view');
         }).catch((error) => {
             console.error('Error saving answer to Firebase:', error);
