@@ -1021,45 +1021,83 @@
     const questionDatabase = {
         stupid: {
             normal: [
+                // Pair 1: Songs
                 "What song do you put on when you need to hype yourself up?",
+                // Pair 2: Animals
                 "What's the coolest animal that exists?",
+                // Pair 3: Food
                 "What's the best food to eat at 2am?",
+                // Pair 4: Skills
                 "What's a skill that would actually impress people at a party?",
+                // Pair 5: Superpowers
                 "What superpower would make your everyday life genuinely easier?",
+                // Pair 6: Brain swap
                 "What celebrity would you want to switch brains with for a day?",
+                // Pair 7: Invisible
                 "What's the first thing you'd do if you turned invisible?",
+                // Pair 8: Stranded
                 "What's one thing you'd want with you if you were stranded in the wilderness?",
+                // Pair 9: Fight
                 "How many 10-year-olds do you think you could fight off at once? (answer with a number)",
+                // Pair 10: Money dare
                 "How much money would it take for you to shave your head right now? ($ amount)",
+                // Pair 11: Emoji - joking
                 "What's the best emoji to use when you want someone to know you're joking?",
+                // Pair 12: Emoji - usage
                 "What emoji do you use the most?",
+                // Pair 13: Emoji - power
                 "What's the most powerful emoji in the entire emoji keyboard?",
+                // Pair 14: Emoji - descriptive
                 "What emoji perfectly captures how you feel on a Monday morning?",
+                // Pair 15: Zombie
                 "What animal would you want on your side in a zombie apocalypse?",
+                // Pair 16: Fictional universes
                 "What fictional universe would you actually want to live in?",
+                // Pair 17: Weapon object
                 "What random object in this room would be your weapon if you had to defend yourself right now?",
+                // Pair 18: Survival duration
                 "How many days could you survive eating only gas station food? (answer with a number)",
+                // Pair 19: Skills - good/bad
                 "What's something completely pointless that you're actually pretty good at?"
             ],
             odd: [
+                // Pair 1: Songs
                 "What song do you always hear at the grocery store?",
+                // Pair 2: Animals
                 "What's the most useless animal you can think of?",
+                // Pair 3: Food
                 "What's the best gas station snack?",
+                // Pair 4: Skills
                 "What's a skill that sounds impressive but is actually pretty easy to learn?",
+                // Pair 5: Superpowers
                 "What superpower sounds amazing but would actually be kind of annoying to have?",
+                // Pair 6: Brain swap
                 "What fictional character would you want to switch brains with for a day?",
+                // Pair 7: Invisible
                 "What's something boring you'd probably end up doing if you turned invisible?",
+                // Pair 8: Stranded
                 "What's one thing you'd want with you if you were stranded on a desert island?",
+                // Pair 9: Fight
                 "How many 10-year-olds do you think it would realistically take to beat you in a fight? (answer with a number)",
+                // Pair 10: Money dare
                 "How much money would it take for you to eat a live bug on camera? ($ amount)",
-                "What's the worst emoji someone could reply with when you text the FBI tip line?",
+                // Pair 11: Emoji - joking/serious
+                "What emoji do people use when they're trying to be funny but it just makes things awkward?",
+                // Pair 12: Emoji - usage
                 "What emoji do other people use that you genuinely hate?",
+                // Pair 13: Emoji - power
                 "What's the most passive-aggressive emoji in existence?",
+                // Pair 14: Emoji - descriptive
                 "What emoji would you use to describe your most chaotic friend?",
+                // Pair 15: Zombie
                 "What household object would actually be your zombie apocalypse weapon?",
+                // Pair 16: Fictional universes
                 "What fictional universe sounds cool but would actually be terrifying to live in?",
+                // Pair 17: Weapon object
                 "What random object in this room would be completely useless if you had to defend yourself?",
+                // Pair 18: Survival duration
                 "How many hours into a wilderness survival show before you'd tap out? (answer with a number)",
+                // Pair 19: Skills - good/bad
                 "What's something you're weirdly bad at considering how basic it is?"
             ]
         },
@@ -1228,7 +1266,7 @@
     let gameState = {
         mode: 'local', // 'local' or 'multiplayer'
         players: [],
-        category: 'love',
+        category: 'stupid',
         currentPlayerIndex: 0,
         oddOneIndex: -1,
         normalQuestion: '',
@@ -1332,7 +1370,7 @@
         roomRef.set({
             host: hostName,
             players: { [sanitizeKey(hostName)]: hostName },
-            category: 'love',
+            category: 'stupid',
             gameStarted: false,
             phase: 'lobby',
             createdAt: Date.now()
