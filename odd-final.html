@@ -497,16 +497,18 @@ const QUESTIONS = {
     { normal: "What's something completely pointless that you're actually good at?",               odd: "What's something you're weirdly bad at considering how basic it is?" },
   ],
   love: [
-    { normal: "What's your biggest ick in a relationship?",                    odd: "What's your biggest green flag in a relationship?" },
-    { normal: "What's your ideal first date?",                                 odd: "What's the worst first date scenario you can imagine?" },
-    { normal: "What's a relationship dealbreaker for you?",                    odd: "What's something you absolutely must have in a relationship?" },
-    { normal: "What's your love language?",                                    odd: "What's your least favourite love language?" },
-    { normal: "What instantly attracts you to someone?",                       odd: "What instantly turns you off about someone?" },
-    { normal: "How do you know you're catching feelings?",                     odd: "How do you know you're losing feelings?" },
-    { normal: "What's your relationship red flag?",                            odd: "What's your relationship green flag?" },
-    { normal: "What's the worst date you've been on?",                         odd: "What's the best date you've ever been on?" },
-    { normal: "What's your type?",                                             odd: "Who is definitely not your type?" },
-    { normal: "What's one thing you'd never compromise on in a relationship?", odd: "What's one thing you'd surprisingly be okay compromising on?" },
+    { normal: "What's your biggest ick in a relationship?",                              odd: "What's something small that weirdly matters a lot to you in a relationship?" },
+    { normal: "What's your ideal first date?",                                           odd: "What's a date idea that sounds bad on paper but would actually be kind of fun?" },
+    { normal: "What's a relationship dealbreaker for you?",                              odd: "What's something people treat as a dealbreaker that you genuinely don't care about?" },
+    { normal: "What's your love language?",                                              odd: "What's a love language you struggle to give, even if you want to?" },
+    { normal: "What's something that instantly attracts you to someone?",                odd: "What's something attractive that people don't usually admit they find attractive?" },
+    { normal: "How do you know when you actually like someone?",                         odd: "What's the weirdest sign you've had a crush on someone?" },
+    { normal: "What's your biggest relationship red flag — in yourself?",                odd: "What's a habit you have that your partner would probably have to just accept?" },
+    { normal: "What's the most romantic thing someone could do for you?",                odd: "What's something that's supposed to be romantic but you'd actually hate?" },
+    { normal: "What's your type?",                                                       odd: "What's a type you keep dating even though you know you shouldn't?" },
+    { normal: "What's something you need in a relationship that's hard to ask for?",     odd: "What's something you've asked for in a relationship and immediately regretted?" },
+    { normal: "What would make you fall for someone faster than anything else?",         odd: "What's something that would make you second-guess a relationship even if everything else was great?" },
+    { normal: "What's the most underrated quality in a partner?",                        odd: "What's a quality everyone says they want in a partner that's actually overrated?" },
   ],
   social: [
     { normal: "What's something embarrassing you've done in public?",          odd: "What's your proudest public moment?" },
@@ -774,16 +776,26 @@ function attachListener(roomRef) {
       if (!S.isHost) { alert('Host left. Room closed.'); resetAll(); }
       return;
     }
-    if (data.phase === 'lobby') { renderLobby(data); return; }
-    if (data.phase === 'question' && S.phase !== 'question') {
+    const phase = data.phase;
+    if (phase === 'lobby') {
+      if (S.phase !== 'lobby') {
+        S.phase = 'lobby';
+        document.getElementById('host-panel').style.display = S.isHost ? 'block' : 'none';
+        showScreen('lobby-screen');
+      }
+      renderLobby(data);
+      return;
+    }
+    if (phase === 'question' && S.phase !== 'question') {
       S.phase = 'question';
       S.normalQ = data.normalQ;
       S.oddQ = data.oddQ;
       S.oddIdx = data.oddIdx;
       S.oddOneName = data.oddOneName;
       loadMPQuestion(data);
+      return;
     }
-    if (data.phase === 'reveal' && S.phase !== 'reveal') {
+    if (phase === 'reveal' && S.phase !== 'reveal') {
       S.phase = 'reveal';
       showResults();
     }
@@ -916,12 +928,11 @@ function showResults() {
 function playAgain() {
   if (S.mode === 'multiplayer') {
     if (!S.isHost) { alert('Only the host can start a new round!'); return; }
-    S.phase = 'lobby';
+    // Don't touch S.phase here — let the listener handle the transition when Firebase updates
     db.ref('rooms/' + S.roomCode).update({
       gameStarted: false, phase: 'lobby',
       normalQ: null, oddQ: null, oddIdx: null, oddOneName: null, answers: null,
     });
-    showScreen('lobby-screen');
   } else {
     startLocal();
   }
